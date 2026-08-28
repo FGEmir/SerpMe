@@ -1,4 +1,4 @@
-# Pazar Pusulası
+# SerpMe
 
 SerpAPI Google Maps sonuçlarını kullanarak seçilen konumdaki işletme tipinin rekabet ve fırsat analizini çıkaran DevPost projesi.
 
@@ -24,7 +24,6 @@ Anahtar eklenmemişse uygulama yine rapor üretir ve açıkça **Demo verisi** e
 | `q` | `{işletme tipi} in {konum}` | Pazar sorgusu |
 | `hl` | `tr` | Türkçe sonuç tercihleri |
 | `api_key` | ortam değişkeninden | Sunucu tarafında gizli tutulan anahtar |
-| `ll` | `@enlem,boylam,zoom` | GPS girildiğinde arama merkezini kesin olarak belirler |
 
 Fırsat skoru, görünen rakip sayısı, ortalama puan, yorum yoğunluğu ve açık işletme oranını birleştirir. API anahtarı hiçbir zaman tarayıcıya gönderilmez.
 

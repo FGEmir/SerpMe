@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pazar Pusulası — Konum Bazlı İşletme Analizi</title>
+  <title>SerpMe — Konum Bazlı İşletme Analizi</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main>
     <section class="hero">
-      <div class="brand"><span class="logo">⌁</span> Pazar Pusulası</div>
+      <div class="brand"><span class="logo" aria-hidden="true"><i></i><i></i><i></i></span><span>Serp<span class="brand-accent">Me</span></span><small>MARKET INTELLIGENCE</small></div>
       <div class="hero-copy">
-        <p class="eyebrow">SERPAPI × GOOGLE MAPS</p>
-        <h1>Doğru yerde, <em>doğru işi</em> kurun.</h1>
-        <p>Bir konum ve işletme tipi seçin. Yerel rekabeti, müşteri memnuniyetini ve fırsat alanlarını birkaç saniyede okuyun.</p>
+        <p class="eyebrow">SERPAPI × GOOGLE MAPS · MARKET SIGNALS</p>
+        <h1>Konum verisini <em>karara</em> dönüştürün.</h1>
+        <p>Bir işletme türü ve detaylı adres girin. Yerel rekabeti, müşteri sinyallerini ve yatırım fırsatını saniyeler içinde görün.</p>
       </div>
       <form id="search-form" class="search-card">
         <label>İşletme tipi
@@ -30,12 +30,6 @@
             <option value="5000">5 km · geniş alan</option>
           </select>
         </label>
-        <label>GPS enlem <small>(opsiyonel)</small>
-          <input id="latitude" name="latitude" inputmode="decimal" placeholder="Örn. 40.9902" />
-        </label>
-        <label>GPS boylam <small>(opsiyonel)</small>
-          <input id="longitude" name="longitude" inputmode="decimal" placeholder="Örn. 29.0241" />
-        </label>
         <label class="wide">Karşılaştırılacak konseptler
           <input id="concepts" name="concepts" placeholder="Virgülle ayırın" value="brunch kafe, tatlıcı, çalışma kafe" />
         </label>
@@ -49,7 +43,7 @@
           </div>
         </details>
         <button type="submit">Pazarı analiz et <span>→</span></button>
-        <p class="hint">Mahalle, cadde veya açık adres yazın. GPS enlem/boylam eklerseniz yarıçap tam merkez çevresinde uygulanır; her konsept ek bir canlı API sorgusu kullanır.</p>
+        <p class="hint">Mahalle, cadde veya açık adres yazın. Daha detaylı adres, daha doğru karşılaştırma sağlar; her konsept ek bir canlı API sorgusu kullanır.</p>
         <p id="form-status" class="form-status" role="status" aria-live="polite"></p>
       </form>
     </section>

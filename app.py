@@ -1,4 +1,4 @@
-"""Local development server and secure SerpAPI proxy for Pazar Pusulası."""
+"""Local development server and secure SerpAPI proxy for SerpMe."""
 import json
 import os
 import time
@@ -73,18 +73,11 @@ class AppHandler(SimpleHTTPRequestHandler):
             radius = max(100, min(10000, int(query.get("radius", ["1000"])[0])))
         except ValueError:
             radius = 1000
-        try:
-            latitude = float(query.get("latitude", [""])[0])
-            longitude = float(query.get("longitude", [""])[0])
-            if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
-                raise ValueError
-        except ValueError:
-            latitude = longitude = None
         concepts = [item.strip() for item in query.get("concepts", [""])[0].split(",") if item.strip()][:3]
         api_key = os.environ.get("SERPAPI_KEY")
         if not business or not location or len(business) > 120 or len(location) > 200:
             return self.send_json({"error": "İşletme tipi ve konum zorunludur."}, 400)
-        cache_key = (business.lower(), location.lower(), radius, latitude, longitude, tuple(concepts))
+        cache_key = (business.lower(), location.lower(), radius, tuple(concepts))
         cached = self.cached_response(cache_key)
         if cached:
             return self.send_json(cached)
@@ -93,7 +86,7 @@ class AppHandler(SimpleHTTPRequestHandler):
         if not api_key:
             payload = demo_results(business, location)
             payload["search_radius_m"] = radius
-            payload["precision_mode"] = "gps" if latitude is not None else "text"
+            payload["precision_mode"] = "text"
             payload["concept_analysis"] = {concept: demo_results(concept, location)["local_results"] for concept in concepts if concept.lower() != business.lower()}
             self.cache_response(cache_key, payload)
             return self.send_json(payload)
@@ -101,10 +94,10 @@ class AppHandler(SimpleHTTPRequestHandler):
         if not self.provider_budget_ok(provider_calls):
             return self.send_json({"error": "Güncel analiz kotası doldu. Lütfen daha sonra tekrar deneyin."}, 429)
         try:
-            payload = self.maps_search(business, location, radius, latitude, longitude, api_key)
+            payload = self.maps_search(business, location, api_key)
             payload["search_radius_m"] = radius
-            payload["precision_mode"] = "gps" if latitude is not None else "text"
-            payload["concept_analysis"] = {concept: self.maps_search(concept, location, radius, latitude, longitude, api_key).get("local_results", []) for concept in concepts if concept.lower() != business.lower()}
+            payload["precision_mode"] = "text"
+            payload["concept_analysis"] = {concept: self.maps_search(concept, location, api_key).get("local_results", []) for concept in concepts if concept.lower() != business.lower()}
             self.cache_response(cache_key, payload)
             self.send_json(payload)
         except Exception:
@@ -156,7 +149,7 @@ class AppHandler(SimpleHTTPRequestHandler):
             RESPONSE_CACHE[key] = (time.monotonic(), payload)
 
     @staticmethod
-    def maps_search(business, location, radius, latitude, longitude, api_key):
+    def maps_search(business, location, api_key):
         params = {
             "engine": "google_maps",
             "type": "search",
@@ -164,9 +157,6 @@ class AppHandler(SimpleHTTPRequestHandler):
             "api_key": api_key,
             "hl": "tr",
         }
-        if latitude is not None:
-            zoom = 16 if radius <= 500 else 15 if radius <= 1000 else 14 if radius <= 2000 else 13
-            params["ll"] = f"@{latitude},{longitude},{zoom}z"
         with urlopen("https://serpapi.com/search.json?" + urlencode(params), timeout=25) as response:
             return json.load(response)
 
@@ -192,5 +182,5 @@ class AppHandler(SimpleHTTPRequestHandler):
 if __name__ == "__main__":
     os.chdir(ROOT)
     port = int(os.environ.get("PORT", "8000"))
-    print(f"Pazar Pusulası: http://localhost:{port}")
+    print(f"SerpMe: http://localhost:{port}")
     ThreadingHTTPServer(("0.0.0.0", port), AppHandler).serve_forever()

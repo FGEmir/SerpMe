@@ -97,8 +97,7 @@ function makeReport(payload, business, location, finance) {
   if (!places.length) throw new Error('Bu arama için Google Maps sonucu bulunamadı. Daha geniş bir konum veya farklı bir işletme tipi deneyin.');
   const {ratings, openCount, averageRating, reviewTotal, reviewAverage, score, density} = summarize(places);
   const label = score >= 70 ? 'Güçlü fırsat' : score >= 48 ? 'Seçici fırsat' : 'Yoğun rekabet';
-  const radius = payload.precision_mode === 'gps' && payload.search_radius_m ? ` · ${payload.search_radius_m >= 1000 ? `${payload.search_radius_m / 1000} km` : `${payload.search_radius_m} m`}` : '';
-  document.querySelector('#report-title').textContent = `${business} · ${location}${radius}`;
+  document.querySelector('#report-title').textContent = `${business} · ${location}`;
   document.querySelector('#data-source').textContent = payload.demo ? '· DEMO VERİSİ' : '· CANLI SERPAPI VERİSİ';
   document.querySelector('#report-date').textContent = new Date().toLocaleDateString('tr-TR', {day:'numeric', month:'long', year:'numeric'}) + ' tarihinde oluşturuldu';
   document.querySelector('#opportunity-score').textContent = score;
@@ -125,10 +124,10 @@ function makeReport(payload, business, location, finance) {
 }
 function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
 form.addEventListener('submit', async (event) => {
-  event.preventDefault(); const button=form.querySelector('button'); const business=form.business.value.trim(), location=form.location.value.trim(), concepts=form.concepts.value.trim(), radius=form.radius.value, latitude=form.latitude.value.trim(), longitude=form.longitude.value.trim(); const finance={rent:num(form.rent.value),fixedCosts:num(form.fixedCosts.value),ticket:num(form.ticket.value),margin:num(form.margin.value)};
+  event.preventDefault(); const button=form.querySelector('button'); const business=form.business.value.trim(), location=form.location.value.trim(), concepts=form.concepts.value.trim(), radius=form.radius.value; const finance={rent:num(form.rent.value),fixedCosts:num(form.fixedCosts.value),ticket:num(form.ticket.value),margin:num(form.margin.value)};
   button.disabled=true;button.textContent='Analiz hazırlanıyor…';
   status.textContent=''; status.className='form-status';
-  try { if (!finance.ticket || !finance.margin) throw new Error('Finansal varsayımlarda sepet tutarı ve brüt marj sıfır olamaz.'); const res=await fetch(`/api/search?${new URLSearchParams({business,location,concepts,radius,latitude,longitude})}`); const payload=await res.json(); if(!res.ok) throw new Error(payload.error || 'Arama başarısız oldu.'); makeReport(payload,business,location,finance); status.textContent=payload.demo ? 'Demo raporu hazır. Canlı veriler için SERPAPI_KEY ekleyin.' : payload.precision_mode === 'gps' ? 'Canlı SerpAPI raporu GPS yarıçapı ile hazır.' : 'Canlı SerpAPI raporu adres metni ile hazır. Kesin yarıçap için GPS koordinatı ekleyin.'; status.classList.add('success'); empty.hidden=true;report.hidden=false;report.scrollIntoView({behavior:'smooth',block:'start'}); }
+  try { if (!finance.ticket || !finance.margin) throw new Error('Finansal varsayımlarda sepet tutarı ve brüt marj sıfır olamaz.'); const res=await fetch(`/api/search?${new URLSearchParams({business,location,concepts,radius})}`); const payload=await res.json(); if(!res.ok) throw new Error(payload.error || 'Arama başarısız oldu.'); makeReport(payload,business,location,finance); status.textContent=payload.demo ? 'Demo raporu hazır. Canlı veriler için SERPAPI_KEY ekleyin.' : 'Canlı SerpAPI raporu adres metni ile hazır.'; status.classList.add('success'); empty.hidden=true;report.hidden=false;report.scrollIntoView({behavior:'smooth',block:'start'}); }
   catch(err){status.textContent=err.message;status.classList.remove('success')} finally {button.disabled=false;button.innerHTML='Pazarı analiz et <span>→</span>'}
 });
 document.querySelector('#export-button').addEventListener('click',()=>window.print());

@@ -1,4 +1,4 @@
-# Pazar Pusulası Sistem Mimarisi
+# SerpMe Sistem Mimarisi
 
 ```mermaid
 flowchart LR
@@ -17,9 +17,9 @@ flowchart LR
 
 ## Katmanlar
 
-- **Web arayüzü:** İşletme, mikro-konum, GPS, yarıçap, konsept adayları ve finansal varsayımları toplar.
+- **Web arayüzü:** İşletme, detaylı mikro-konum, yarıçap, konsept adayları ve finansal varsayımları toplar.
 - **İstek doğrulama:** Boş alanları, koordinat aralığını ve yarıçapı denetler.
-- **Konum çözümleme:** GPS verilirse `ll=@latitude,longitude,zoom` ile kesin merkez kullanır; yoksa işletme + açık adres sorgusu üretir.
+- **Konum çözümleme:** İşletme tipi ile mahalle, cadde veya açık adresi tek bir Google Maps sorgusunda birleştirir.
 - **SerpAPI adaptörü:** API anahtarını sadece sunucuda `.env` üzerinden kullanır; istemciye asla göndermez.
 - **Pazar analiz motoru:** Rakip yoğunluğu, puan, yorum talebi ve açık işletme oranını hesaplar.
 - **Konsept eşleştirme motoru:** Her aday için ayrı Google Maps sorgusu yapar; mikro-konum ve kategori eşleşmeyen işletmeleri dışarıda bırakır.
@@ -31,8 +31,7 @@ flowchart LR
 
 - `engine=google_maps`: Google Maps motoru.
 - `type=search`: Yerel işletme listesi.
-- `q`: İşletme tipi ve GPS yoksa mikro-konumu içeren arama metni.
-- `ll`: GPS girildiğinde `@enlem,boylam,zoom` biçiminde kesin arama merkezi.
+- `q`: İşletme tipi ile mikro-konumu içeren arama metni.
 - `hl=tr`: Türkçe Google Maps bağlamı.
 - `api_key`: Sadece sunucuda tutulan SerpAPI anahtarı.
 
