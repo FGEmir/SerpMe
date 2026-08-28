@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pazar Pusulası — Konum Bazlı İşletme Analizi</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <div class="brand"><span class="logo">⌁</span> Pazar Pusulası</div>
+      <div class="hero-copy">
+        <p class="eyebrow">SERPAPI × GOOGLE MAPS</p>
+        <h1>Doğru yerde, <em>doğru işi</em> kurun.</h1>
+        <p>Bir konum ve işletme tipi seçin. Yerel rekabeti, müşteri memnuniyetini ve fırsat alanlarını birkaç saniyede okuyun.</p>
+      </div>
+      <form id="search-form" class="search-card">
+        <label>İşletme tipi
+          <input id="business" name="business" placeholder="Örn. üçüncü nesil kahve" required value="kahve dükkanı" />
+        </label>
+        <label>Hedef mikro konum
+          <input id="location" name="location" placeholder="Mahalle, cadde, kapı no, şehir" required value="Caferağa, Kadıköy, İstanbul" />
+        </label>
+        <label>Tarama yarıçapı
+          <select id="radius" name="radius">
+            <option value="500">500 m · sokak ölçeği</option>
+            <option value="1000" selected>1 km · mahalle ölçeği</option>
+            <option value="2000">2 km · ilçe yakın çevresi</option>
+            <option value="5000">5 km · geniş alan</option>
+          </select>
+        </label>
+        <label>GPS enlem <small>(opsiyonel)</small>
+          <input id="latitude" name="latitude" inputmode="decimal" placeholder="Örn. 40.9902" />
+        </label>
+        <label>GPS boylam <small>(opsiyonel)</small>
+          <input id="longitude" name="longitude" inputmode="decimal" placeholder="Örn. 29.0241" />
+        </label>
+        <label class="wide">Karşılaştırılacak konseptler
+          <input id="concepts" name="concepts" placeholder="Virgülle ayırın" value="brunch kafe, tatlıcı, çalışma kafe" />
+        </label>
+        <details class="finance-inputs wide">
+          <summary>Finansal varsayımlar — başa baş analizi için</summary>
+          <div class="finance-grid">
+            <label>Aylık kira (₺)<input name="rent" type="number" min="0" value="120000" /></label>
+            <label>Aylık sabit gider (₺)<input name="fixedCosts" type="number" min="0" value="90000" /></label>
+            <label>Ortalama sepet (₺)<input name="ticket" type="number" min="1" value="300" /></label>
+            <label>Brüt marj (%)<input name="margin" type="number" min="1" max="99" value="65" /></label>
+          </div>
+        </details>
+        <button type="submit">Pazarı analiz et <span>→</span></button>
+        <p class="hint">Mahalle, cadde veya açık adres yazın. GPS enlem/boylam eklerseniz yarıçap tam merkez çevresinde uygulanır; her konsept ek bir canlı API sorgusu kullanır.</p>
+        <p id="form-status" class="form-status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section id="empty-state" class="empty-state">
+      <span>↗</span>
+      <p>Raporunuz burada oluşacak.</p>
+    </section>
+
+    <section id="report" hidden>
+      <div class="report-heading">
+        <div><p class="eyebrow">YEREL PAZAR RAPORU <span id="data-source"></span></p><h2 id="report-title">—</h2><p id="report-date"></p></div>
+        <button id="export-button" class="secondary">Raporu yazdır</button>
+      </div>
+      <div class="score-card">
+        <div class="score-ring"><strong id="opportunity-score">—</strong><span>/ 100</span></div>
+        <div><p class="eyebrow">FIRSAT SKORU</p><h3 id="opportunity-label">Hesaplanıyor</h3><p id="opportunity-text"></p></div>
+      </div>
+      <div class="metric-grid" id="metrics"></div>
+      <div class="insight-grid">
+        <article><p class="eyebrow">NE GÖRÜYORUZ?</p><h3>Rekabet görünümü</h3><p id="competition-insight"></p></article>
+        <article><p class="eyebrow">MÜŞTERİ SİNYALİ</p><h3>Memnuniyet & talep</h3><p id="customer-insight"></p></article>
+        <article><p class="eyebrow">ÖNERİ</p><h3>Bir sonraki hamle</h3><p id="recommendation"></p></article>
+      </div>
+      <section class="concept-section">
+        <div><p class="eyebrow">KONSEPT ÖNERİSİ</p><h3>Bu konumda hangi fikir daha güçlü?</h3><p>Her aday; yalnızca aynı mikro-konumda ve aday kategoriyle eşleşen Google Maps işletmeleri üzerinden karşılaştırılır.</p></div>
+        <div id="concept-list" class="concept-list"></div>
+      </section>
+      <section class="business-plan">
+        <div><p class="eyebrow">BİRİM EKONOMİ & OPERASYON PLANI</p><h3>Yatırım kararı için teknik çerçeve</h3><p id="plan-summary"></p></div>
+        <div class="plan-grid" id="plan-metrics"></div>
+        <ol id="plan-actions" class="plan-actions"></ol>
+        <p class="disclaimer">Finansal sonuçlar kullanıcı tarafından girilen varsayımlardan türetilir; vergi, yatırım harcaması, kredi maliyeti ve amortisman dahil değildir.</p>
+      </section>
+      <section class="results-section">
+        <div><p class="eyebrow">KARŞILAŞTIRMA SETİ</p><h3>Öne çıkan yerel işletmeler</h3><p class="selection-note">Konum, işletme tipi, puan, yorum hacmi ve Google Maps sırası ile seçilir.</p></div>
+        <div class="result-list" id="result-list"></div>
+      </section>
+      <p class="disclaimer">Fırsat skoru; listelenen işletme sayısı, ortalama puan, yorum yoğunluğu ve açık işletme oranından hesaplanan keşif göstergesidir. Nihai yatırım kararı öncesinde saha araştırması önerilir.</p>
+    </section>
+  </main>
+  <template id="metric-template"><article class="metric"><p></p><strong></strong><small></small></article></template>
+  <script src="app.js"></script>
+</body>
+</html>
