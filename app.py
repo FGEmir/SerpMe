@@ -1,13 +1,23 @@
 """Local development server and secure SerpAPI proxy for Pazar Pusulası."""
 import json
 import os
+import time
+from collections import defaultdict, deque
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from threading import Lock
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
 
 ROOT = Path(__file__).parent
+PUBLIC_FILES = {"/", "/index.html", "/styles.css", "/app.js"}
+REQUEST_WINDOW_SECONDS = 60
+MAX_SEARCHES_PER_WINDOW = 3
+CACHE_SECONDS = 300
+REQUEST_LOG = defaultdict(deque)
+RESPONSE_CACHE = {}
+CACHE_LOCK = Lock()
 
 
 def load_local_env():
@@ -39,10 +49,16 @@ def demo_results(business, location):
 
 class AppHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
-        if self.path == "/healthz":
+        from urllib.parse import urlparse
+        path = urlparse(self.path).path
+        if path == "/healthz":
             return self.send_json({"status": "ok", "service": "pazar-pusulasi"})
-        if self.path.startswith("/api/search"):
+        if path == "/api/search":
             return self.search()
+        if path not in PUBLIC_FILES:
+            self.send_error(404, "Bulunamadı")
+            return
+        self.path = "/index.html" if path == "/" else path
         return super().do_GET()
 
     def search(self):
@@ -63,22 +79,56 @@ class AppHandler(SimpleHTTPRequestHandler):
             latitude = longitude = None
         concepts = [item.strip() for item in query.get("concepts", [""])[0].split(",") if item.strip()][:3]
         api_key = os.environ.get("SERPAPI_KEY")
-        if not business or not location:
+        if not business or not location or len(business) > 120 or len(location) > 200:
             return self.send_json({"error": "İşletme tipi ve konum zorunludur."}, 400)
+        cache_key = (business.lower(), location.lower(), radius, latitude, longitude, tuple(concepts))
+        cached = self.cached_response(cache_key)
+        if cached:
+            return self.send_json(cached)
+        if not self.rate_limit_ok():
+            return self.send_json({"error": "Çok fazla analiz isteği gönderildi. Lütfen bir dakika sonra tekrar deneyin."}, 429)
         if not api_key:
             payload = demo_results(business, location)
             payload["search_radius_m"] = radius
             payload["precision_mode"] = "gps" if latitude is not None else "text"
             payload["concept_analysis"] = {concept: demo_results(concept, location)["local_results"] for concept in concepts if concept.lower() != business.lower()}
+            self.cache_response(cache_key, payload)
             return self.send_json(payload)
         try:
             payload = self.maps_search(business, location, radius, latitude, longitude, api_key)
             payload["search_radius_m"] = radius
             payload["precision_mode"] = "gps" if latitude is not None else "text"
             payload["concept_analysis"] = {concept: self.maps_search(concept, location, radius, latitude, longitude, api_key).get("local_results", []) for concept in concepts if concept.lower() != business.lower()}
+            self.cache_response(cache_key, payload)
             self.send_json(payload)
-        except Exception as exc:
-            self.send_json({"error": f"SerpAPI isteği tamamlanamadı: {exc}"}, 502)
+        except Exception:
+            self.send_json({"error": "Veri sağlayıcısına şu anda erişilemiyor. Lütfen daha sonra tekrar deneyin."}, 502)
+
+    def rate_limit_ok(self):
+        now = time.monotonic()
+        client = self.client_address[0]
+        with CACHE_LOCK:
+            history = REQUEST_LOG[client]
+            while history and now - history[0] > REQUEST_WINDOW_SECONDS:
+                history.popleft()
+            if len(history) >= MAX_SEARCHES_PER_WINDOW:
+                return False
+            history.append(now)
+            return True
+
+    @staticmethod
+    def cached_response(key):
+        with CACHE_LOCK:
+            entry = RESPONSE_CACHE.get(key)
+            if entry and time.monotonic() - entry[0] < CACHE_SECONDS:
+                return entry[1]
+            RESPONSE_CACHE.pop(key, None)
+            return None
+
+    @staticmethod
+    def cache_response(key, payload):
+        with CACHE_LOCK:
+            RESPONSE_CACHE[key] = (time.monotonic(), payload)
 
     @staticmethod
     def maps_search(business, location, radius, latitude, longitude, api_key):
@@ -103,6 +153,14 @@ class AppHandler(SimpleHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    def end_headers(self):
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
+        self.send_header("Permissions-Policy", "geolocation=(), camera=(), microphone=()")
+        self.send_header("Content-Security-Policy", "default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; connect-src 'self'")
+        super().end_headers()
 
 
 if __name__ == "__main__":
