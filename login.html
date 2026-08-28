@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Giriş — SerpMe</title>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="liquid.css" />
 </head>
 <body>
   <main class="site-page login-page">
@@ -14,16 +15,18 @@
     </nav>
     <section class="login-card">
       <p class="eyebrow">ÜYE ALANI</p><h1>SerpMe’ye <em>hoş geldiniz.</em></h1>
-      <p>Hesap sistemi yakında kullanıma açılacak. Bu ekranda girilen bilgiler hiçbir yere gönderilmez veya saklanmaz.</p>
-      <form class="login-form" novalidate>
-        <label>E-posta adresi<input type="email" placeholder="adiniz@ornek.com" autocomplete="email" /></label>
-        <label>Şifre<input type="password" placeholder="••••••••" autocomplete="current-password" /></label>
-        <button type="button" aria-disabled="true">Giriş yakında açılacak</button>
+      <p>Analizlerinizi, iş fikirlerinizi ve fizibilite notlarınızı güvenli kişisel portföyünüzde toplayın.</p>
+      <form id="login-form" class="login-form">
+        <label>E-posta adresi<input id="auth-email" type="email" placeholder="adiniz@ornek.com" autocomplete="email" required /></label>
+        <label>Şifre<input id="auth-password" type="password" placeholder="En az 6 karakter" autocomplete="current-password" minlength="6" required /></label>
+        <button type="submit">Giriş yap <span>→</span></button>
       </form>
-      <p class="login-note">Bu sayfa güvenli hesap altyapısı bağlanana kadar yalnızca arayüz ön izlemesidir.</p>
+      <p id="auth-status" class="login-note" role="status"></p>
+      <button id="signup-button" class="secondary auth-secondary" type="button">Yeni hesap oluştur</button>
       <a class="text-link" href="/">Analizi misafir olarak kullan →</a>
     </section>
     <footer class="site-footer"><span>© 2026 Fzl Studio</span><span>SerpMe · Konum tabanlı pazar istihbaratı</span><a href="/about.html">Hakkımızda</a></footer>
   </main>
+  <script src="supabase-config.js"></script><script src="auth.js"></script><script src="login.js"></script>
 </body>
 </html>

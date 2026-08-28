@@ -11,7 +11,7 @@ from urllib.request import urlopen
 
 
 ROOT = Path(__file__).parent
-PUBLIC_FILES = {"/", "/index.html", "/styles.css", "/app.js", "/about.html", "/login.html"}
+PUBLIC_FILES = {"/", "/index.html", "/styles.css", "/liquid.css", "/app.js", "/auth.js", "/login.js", "/portfolio.js", "/supabase-config.js", "/about.html", "/login.html", "/portfolio.html"}
 REQUEST_WINDOW_SECONDS = 60
 MAX_SEARCHES_PER_WINDOW = 3
 PROVIDER_WINDOW_SECONDS = 3600
@@ -175,7 +175,7 @@ class AppHandler(SimpleHTTPRequestHandler):
         self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
         self.send_header("Strict-Transport-Security", "max-age=31536000")
         self.send_header("Permissions-Policy", "geolocation=(), camera=(), microphone=()")
-        self.send_header("Content-Security-Policy", "default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; connect-src 'self'; frame-src https://www.google.com https://maps.google.com")
+        self.send_header("Content-Security-Policy", "default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; connect-src 'self' https://neunsivpakcbgvfxvprx.supabase.co; frame-src https://www.google.com https://maps.google.com")
         super().end_headers()
 
 

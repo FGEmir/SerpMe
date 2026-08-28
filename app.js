@@ -2,6 +2,7 @@ const form = document.querySelector('#search-form');
 const report = document.querySelector('#report');
 const empty = document.querySelector('#empty-state');
 const status = document.querySelector('#form-status');
+let activeReport = null;
 const num = (value) => Number(String(value || 0).replace(/[^\d.]/g, '')) || 0;
 const plural = (n, single, many) => `${n.toLocaleString('tr-TR')} ${n === 1 ? single : many}`;
 if (window.location.protocol === 'file:') {
@@ -135,6 +136,9 @@ function makeReport(payload, business, location, finance) {
   const list = document.querySelector('#result-list'); list.innerHTML = '';
   const featured = selectFeatured(places, business, location);
   if (!featured.length) featured.push(...places.slice(0, 8));
+  activeReport = { business, location, score, density, averageRating, reviewTotal, places: featured, finance };
+  const titleInput = document.querySelector('#feasibility-title');
+  if (titleInput && !titleInput.value) titleInput.value = `${location.split(',')[0]} ${business}`;
   renderLocationMap(business, location, featured, {density, averageRating});
   featured.forEach(place => { const row=document.createElement('div');row.className='result'; const state=place.open_state || 'Durum bilinmiyor'; const score = place.comparisonScore ? `<small class="match">Uyum ${place.comparisonScore}/100</small>` : ''; row.innerHTML=`<strong>${escapeHtml(place.title || place.name || 'İsimsiz işletme')} ${score}</strong><span class="rating">★ ${place.rating || '—'} <small>(${num(place.reviews).toLocaleString('tr-TR')})</small></span><span>${escapeHtml(place.address || place.type || '')}</span><span class="${/açık|open/i.test(state)?'open':'closed'}">${escapeHtml(state)}</span>`;list.append(row); });
   renderConcepts(payload.concept_analysis, location);
@@ -149,3 +153,18 @@ form.addEventListener('submit', async (event) => {
   catch(err){status.textContent=err.message;status.classList.remove('success')} finally {button.disabled=false;button.innerHTML='Pazarı analiz et <span>→</span>'}
 });
 document.querySelector('#export-button').addEventListener('click',()=>window.print());
+document.querySelector('#save-report-button').addEventListener('click', async () => {
+  const saveStatus = document.querySelector('#save-status');
+  const user = await SerpMeAuth.currentUser();
+  if (!user) { window.location.href = '/login.html'; return; }
+  if (!activeReport) { saveStatus.textContent = 'Önce bir pazar analizi oluşturun.'; return; }
+  const title = document.querySelector('#feasibility-title').value.trim() || `${activeReport.location} ${activeReport.business}`;
+  const stage = document.querySelector('#feasibility-stage').value;
+  const notes = document.querySelector('#feasibility-notes').value.trim();
+  try {
+    saveStatus.textContent = 'Portföye kaydediliyor…';
+    const idea = await SerpMeAuth.supabaseFetch('/rest/v1/ideas', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ owner_id: user.id, title, concept: activeReport.business, location: activeReport.location, stage, notes }) });
+    await SerpMeAuth.supabaseFetch('/rest/v1/reports', { method: 'POST', body: JSON.stringify({ owner_id: user.id, idea_id: idea[0].id, business: activeReport.business, location: activeReport.location, opportunity_score: activeReport.score, density: activeReport.density, average_rating: activeReport.averageRating || null, total_reviews: activeReport.reviewTotal, feasibility: { title, stage, notes }, report_payload: { places: activeReport.places, finance: activeReport.finance } }) });
+    saveStatus.textContent = 'Analiz ve fizibilite notu portföyünüze kaydedildi.'; saveStatus.classList.add('success');
+  } catch (error) { saveStatus.textContent = error.message; saveStatus.classList.remove('success'); }
+});

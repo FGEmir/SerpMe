@@ -5,13 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SerpMe — Konum Bazlı İşletme Analizi</title>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="liquid.css" />
 </head>
 <body>
   <main>
     <section class="hero">
       <nav class="top-nav" aria-label="Ana menü">
         <a class="brand" href="/" aria-label="SerpMe ana sayfa"><span class="logo" aria-hidden="true"><i></i><i></i><i></i></span><span>Serp<span class="brand-accent">Me</span></span><small>MARKET INTELLIGENCE</small></a>
-        <div class="nav-links"><a href="/about.html">Hakkımızda</a><a class="nav-cta" href="/login.html">Giriş</a></div>
+        <div class="nav-links"><a href="/about.html">Hakkımızda</a><a class="nav-cta" data-auth-link href="/login.html">Giriş</a></div>
       </nav>
       <div class="hero-copy">
         <p class="eyebrow">SERPAPI × GOOGLE MAPS · MARKET SIGNALS</p>
@@ -90,6 +91,15 @@
         <ol id="plan-actions" class="plan-actions"></ol>
         <p class="disclaimer">Finansal sonuçlar kullanıcı tarafından girilen varsayımlardan türetilir; vergi, yatırım harcaması, kredi maliyeti ve amortisman dahil değildir.</p>
       </section>
+      <section class="feasibility-section">
+        <div><p class="eyebrow">FİZİBİLİTE ADIMI</p><h3>Fikri yatırım kararına yaklaştırın</h3><p>Riskleri, doğrulama önceliklerini ve ilk aksiyonu kayda alarak bu analizi portföyünüze ekleyin.</p></div>
+        <div class="feasibility-grid">
+          <label>Fikir adı<input id="feasibility-title" placeholder="Örn. Caferağa çalışma kafesi" /></label>
+          <label>Aşama<select id="feasibility-stage"><option>Fikir</option><option>Araştırma</option><option>Doğrulama</option><option>Yatırım</option></select></label>
+          <label class="wide">Doğrulama notu<textarea id="feasibility-notes" placeholder="Saha sayımı, kira teklifi, menü testi veya kritik varsayım..."></textarea></label>
+          <button id="save-report-button" type="button">Portföye ve rapora kaydet <span>→</span></button><p id="save-status" class="form-status" role="status"></p>
+        </div>
+      </section>
       <section class="results-section">
         <div><p class="eyebrow">KARŞILAŞTIRMA SETİ</p><h3>Öne çıkan yerel işletmeler</h3><p class="selection-note">Konum, işletme tipi, puan, yorum hacmi ve Google Maps sırası ile seçilir.</p></div>
         <div class="result-list" id="result-list"></div>
@@ -99,6 +109,8 @@
     <footer class="site-footer"><span>© 2026 Fzl Studio</span><span>SerpMe · Konum tabanlı pazar istihbaratı</span><a href="/about.html">Hakkımızda</a></footer>
   </main>
   <template id="metric-template"><article class="metric"><p></p><strong></strong><small></small></article></template>
+  <script src="supabase-config.js"></script>
+  <script src="auth.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

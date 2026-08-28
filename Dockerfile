@@ -1,7 +1,7 @@
 FROM python:3.12-slim
 
 WORKDIR /app
-COPY app.py index.html about.html login.html styles.css app.js ./
+COPY app.py index.html about.html login.html portfolio.html styles.css liquid.css app.js auth.js login.js portfolio.js supabase-config.js ./
 
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1

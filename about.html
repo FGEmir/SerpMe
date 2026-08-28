@@ -5,12 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hakkımızda — SerpMe</title>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="liquid.css" />
 </head>
 <body>
   <main class="site-page">
     <nav class="page-nav" aria-label="Ana menü">
       <a class="brand" href="/"><span class="logo" aria-hidden="true"><i></i><i></i><i></i></span><span>Serp<span class="brand-accent">Me</span></span><small>MARKET INTELLIGENCE</small></a>
-      <div class="nav-links"><a href="/">Analiz</a><a href="/about.html" aria-current="page">Hakkımızda</a><a class="nav-cta" href="/login.html">Giriş</a></div>
+      <div class="nav-links"><a href="/">Analiz</a><a href="/about.html" aria-current="page">Hakkımızda</a><a class="nav-cta" data-auth-link href="/login.html">Giriş</a></div>
     </nav>
     <section class="about-hero">
       <p class="eyebrow">FZL STUDIO × SERPME</p>
@@ -25,5 +26,6 @@
     <section class="about-callout"><p class="eyebrow">YAKLAŞIM</p><h2>Harita bir başlangıçtır; karar, verinin bağlamıyla güçlenir.</h2><a class="text-link" href="/">Pazar analizine dön →</a></section>
     <footer class="site-footer"><span>© 2026 Fzl Studio</span><span>SerpMe · Konum tabanlı pazar istihbaratı</span><a href="/login.html">Giriş</a></footer>
   </main>
+  <script src="supabase-config.js"></script><script src="auth.js"></script>
 </body>
 </html>
