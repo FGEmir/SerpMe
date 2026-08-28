@@ -25,7 +25,7 @@ flowchart LR
 - **Konsept eşleştirme motoru:** Her aday için ayrı Google Maps sorgusu yapar; mikro-konum ve kategori eşleşmeyen işletmeleri dışarıda bırakır.
 - **Finansal plan motoru:** Kullanıcının kira, sabit gider, sepet ve brüt marj varsayımlarından başa baş hedefini üretir.
 - **Dağıtım katmanı:** Docker imajı uygulamayı çalıştırır; platform `GET /healthz` ile hizmet durumunu denetler. `SERPAPI_KEY` üretimde platformun gizli ortam değişkeni olarak tanımlanır.
-- **Güvenlik katmanı:** Statik dosya izin listesi `.env` erişimini engeller; IP başına istek sınırı ve beş dakikalık önbellek SerpAPI anahtarının kötüye kullanım riskini düşürür. Güvenlik başlıkları tarayıcı saldırı yüzeyini sınırlar.
+- **Güvenlik katmanı:** Statik dosya izin listesi `.env` erişimini engeller; IP başına istek sınırı, sabit boyutlu beş dakikalık önbellek ve saatlik SerpAPI çağrı bütçesi anahtarın dolaylı kullanımını sınırlar. Güvenlik başlıkları tarayıcı saldırı yüzeyini sınırlar; konteyner yetkisiz kullanıcı ile çalışır.
 
 ## SerpAPI parametreleri
 

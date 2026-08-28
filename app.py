@@ -14,10 +14,14 @@ ROOT = Path(__file__).parent
 PUBLIC_FILES = {"/", "/index.html", "/styles.css", "/app.js"}
 REQUEST_WINDOW_SECONDS = 60
 MAX_SEARCHES_PER_WINDOW = 3
+PROVIDER_WINDOW_SECONDS = 3600
+MAX_PROVIDER_CALLS_PER_WINDOW = int(os.environ.get("MAX_SERPAPI_CALLS_PER_HOUR", "30"))
 CACHE_SECONDS = 300
+MAX_CACHE_ENTRIES = 128
 REQUEST_LOG = defaultdict(deque)
 RESPONSE_CACHE = {}
 CACHE_LOCK = Lock()
+PROVIDER_CALL_LOG = deque()
 
 
 def load_local_env():
@@ -56,8 +60,7 @@ class AppHandler(SimpleHTTPRequestHandler):
         if path == "/api/search":
             return self.search()
         if path not in PUBLIC_FILES:
-            self.send_error(404, "Bulunamadı")
-            return
+            return self.send_json({"error": "Kaynak bulunamadı."}, 404)
         self.path = "/index.html" if path == "/" else path
         return super().do_GET()
 
@@ -94,6 +97,9 @@ class AppHandler(SimpleHTTPRequestHandler):
             payload["concept_analysis"] = {concept: demo_results(concept, location)["local_results"] for concept in concepts if concept.lower() != business.lower()}
             self.cache_response(cache_key, payload)
             return self.send_json(payload)
+        provider_calls = 1 + sum(1 for concept in concepts if concept.lower() != business.lower())
+        if not self.provider_budget_ok(provider_calls):
+            return self.send_json({"error": "Güncel analiz kotası doldu. Lütfen daha sonra tekrar deneyin."}, 429)
         try:
             payload = self.maps_search(business, location, radius, latitude, longitude, api_key)
             payload["search_radius_m"] = radius
@@ -106,7 +112,11 @@ class AppHandler(SimpleHTTPRequestHandler):
 
     def rate_limit_ok(self):
         now = time.monotonic()
-        client = self.client_address[0]
+        # Render forwards the originating client through this header. The global
+        # provider budget below remains the cost-control boundary if it is absent
+        # or intentionally forged by an upstream client.
+        forwarded_for = self.headers.get("X-Forwarded-For", "").split(",", 1)[0].strip()
+        client = forwarded_for or self.client_address[0]
         with CACHE_LOCK:
             history = REQUEST_LOG[client]
             while history and now - history[0] > REQUEST_WINDOW_SECONDS:
@@ -114,6 +124,18 @@ class AppHandler(SimpleHTTPRequestHandler):
             if len(history) >= MAX_SEARCHES_PER_WINDOW:
                 return False
             history.append(now)
+            return True
+
+    @staticmethod
+    def provider_budget_ok(call_count):
+        """Cap paid upstream requests even when public clients rotate IPs."""
+        now = time.monotonic()
+        with CACHE_LOCK:
+            while PROVIDER_CALL_LOG and now - PROVIDER_CALL_LOG[0] > PROVIDER_WINDOW_SECONDS:
+                PROVIDER_CALL_LOG.popleft()
+            if len(PROVIDER_CALL_LOG) + call_count > MAX_PROVIDER_CALLS_PER_WINDOW:
+                return False
+            PROVIDER_CALL_LOG.extend([now] * call_count)
             return True
 
     @staticmethod
@@ -128,6 +150,9 @@ class AppHandler(SimpleHTTPRequestHandler):
     @staticmethod
     def cache_response(key, payload):
         with CACHE_LOCK:
+            if len(RESPONSE_CACHE) >= MAX_CACHE_ENTRIES:
+                oldest_key = min(RESPONSE_CACHE, key=lambda item: RESPONSE_CACHE[item][0])
+                RESPONSE_CACHE.pop(oldest_key, None)
             RESPONSE_CACHE[key] = (time.monotonic(), payload)
 
     @staticmethod
@@ -158,6 +183,7 @@ class AppHandler(SimpleHTTPRequestHandler):
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "DENY")
         self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
+        self.send_header("Strict-Transport-Security", "max-age=31536000")
         self.send_header("Permissions-Policy", "geolocation=(), camera=(), microphone=()")
         self.send_header("Content-Security-Policy", "default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; connect-src 'self'")
         super().end_headers()

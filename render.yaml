@@ -6,3 +6,5 @@ services:
     envVars:
       - key: SERPAPI_KEY
         sync: false
+      - key: MAX_SERPAPI_CALLS_PER_HOUR
+        value: "30"
