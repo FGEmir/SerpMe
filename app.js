@@ -92,6 +92,23 @@ function renderBusinessPlan(stats, business, finance) {
   document.querySelector('#plan-actions').innerHTML = actions.map(action => `<li>${escapeHtml(action)}</li>`).join('');
 }
 
+function renderLocationMap(business, location, places, stats) {
+  const frame = document.querySelector('#location-map');
+  frame.src = `https://www.google.com/maps?q=${encodeURIComponent(`${business} ${location}`)}&output=embed`;
+  document.querySelector('#map-location').textContent = `${location} çevresinde ${business} için canlı görünüm`;
+  document.querySelector('#map-density').textContent = `%${stats.density}`;
+  document.querySelector('#map-rating').textContent = stats.averageRating ? `${stats.averageRating.toFixed(1)} / 5` : '—';
+  document.querySelector('#map-business-count').textContent = places.length.toLocaleString('tr-TR');
+  const list = document.querySelector('#map-businesses');
+  list.innerHTML = '';
+  places.slice(0, 5).forEach((place, index) => {
+    const item = document.createElement('article');
+    item.className = 'map-business';
+    item.innerHTML = `<span>${String(index + 1).padStart(2, '0')}</span><div><strong>${escapeHtml(place.title || place.name || 'İsimsiz işletme')}</strong><small>${escapeHtml(place.address || place.type || 'Yakın çevre')}</small></div><b>${place.rating || '—'}<small>/5</small></b>`;
+    list.append(item);
+  });
+}
+
 function makeReport(payload, business, location, finance) {
   const places = payload.local_results || payload.place_results || [];
   if (!places.length) throw new Error('Bu arama için Google Maps sonucu bulunamadı. Daha geniş bir konum veya farklı bir işletme tipi deneyin.');
@@ -118,6 +135,7 @@ function makeReport(payload, business, location, finance) {
   const list = document.querySelector('#result-list'); list.innerHTML = '';
   const featured = selectFeatured(places, business, location);
   if (!featured.length) featured.push(...places.slice(0, 8));
+  renderLocationMap(business, location, featured, {density, averageRating});
   featured.forEach(place => { const row=document.createElement('div');row.className='result'; const state=place.open_state || 'Durum bilinmiyor'; const score = place.comparisonScore ? `<small class="match">Uyum ${place.comparisonScore}/100</small>` : ''; row.innerHTML=`<strong>${escapeHtml(place.title || place.name || 'İsimsiz işletme')} ${score}</strong><span class="rating">★ ${place.rating || '—'} <small>(${num(place.reviews).toLocaleString('tr-TR')})</small></span><span>${escapeHtml(place.address || place.type || '')}</span><span class="${/açık|open/i.test(state)?'open':'closed'}">${escapeHtml(state)}</span>`;list.append(row); });
   renderConcepts(payload.concept_analysis, location);
   renderBusinessPlan({density}, business, finance);

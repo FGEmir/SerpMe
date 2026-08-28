@@ -9,7 +9,10 @@
 <body>
   <main>
     <section class="hero">
-      <div class="brand"><span class="logo" aria-hidden="true"><i></i><i></i><i></i></span><span>Serp<span class="brand-accent">Me</span></span><small>MARKET INTELLIGENCE</small></div>
+      <nav class="top-nav" aria-label="Ana menü">
+        <a class="brand" href="/" aria-label="SerpMe ana sayfa"><span class="logo" aria-hidden="true"><i></i><i></i><i></i></span><span>Serp<span class="brand-accent">Me</span></span><small>MARKET INTELLIGENCE</small></a>
+        <div class="nav-links"><a href="/about.html">Hakkımızda</a><a class="nav-cta" href="/login.html">Giriş</a></div>
+      </nav>
       <div class="hero-copy">
         <p class="eyebrow">SERPAPI × GOOGLE MAPS · MARKET SIGNALS</p>
         <h1>Hayalini <em>gerçeğe</em> dönüştür.</h1>
@@ -63,6 +66,15 @@
         <div><p class="eyebrow">FIRSAT SKORU</p><h3 id="opportunity-label">Hesaplanıyor</h3><p id="opportunity-text"></p></div>
       </div>
       <div class="metric-grid" id="metrics"></div>
+      <section class="map-section" aria-labelledby="map-title">
+        <div class="map-copy">
+          <p class="eyebrow">KONUM KATMANI</p><h3 id="map-title">Yakın çevre görünümü</h3><p id="map-location"></p>
+          <div class="map-stats"><article><span>Harita yoğunluğu</span><strong id="map-density">—</strong></article><article><span>Ort. puan</span><strong id="map-rating">—</strong></article><article><span>İncelenen işletme</span><strong id="map-business-count">—</strong></article></div>
+          <p class="map-note">İşletmeler, girilen açık adres ve seçilen kategoriyle eşleşen Google Maps sonuçlarından alınır.</p>
+        </div>
+        <div class="map-frame-wrap"><iframe id="location-map" title="Seçilen konumun haritası" loading="lazy" referrerpolicy="no-referrer"></iframe></div>
+        <div class="map-businesses" id="map-businesses"></div>
+      </section>
       <div class="insight-grid">
         <article><p class="eyebrow">NE GÖRÜYORUZ?</p><h3>Rekabet görünümü</h3><p id="competition-insight"></p></article>
         <article><p class="eyebrow">MÜŞTERİ SİNYALİ</p><h3>Memnuniyet & talep</h3><p id="customer-insight"></p></article>
@@ -84,6 +96,7 @@
       </section>
       <p class="disclaimer">Fırsat skoru; listelenen işletme sayısı, ortalama puan, yorum yoğunluğu ve açık işletme oranından hesaplanan keşif göstergesidir. Nihai yatırım kararı öncesinde saha araştırması önerilir.</p>
     </section>
+    <footer class="site-footer"><span>© 2026 Fzl Studio</span><span>SerpMe · Konum tabanlı pazar istihbaratı</span><a href="/about.html">Hakkımızda</a></footer>
   </main>
   <template id="metric-template"><article class="metric"><p></p><strong></strong><small></small></article></template>
   <script src="app.js"></script>
