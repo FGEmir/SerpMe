@@ -3,10 +3,10 @@ const studioCatalog = window.SerpMeCatalog;
 const studioCategory = document.querySelector('#studio-category');
 const studioConcept = document.querySelector('#studio-concept');
 const modelProfiles = {
-  cafe: {label: 'Kafe / hızlı servis', front: .14, service: .19, back: .18, circulation: .20, sqmPerGuest: 1.65, defaultTurns: 3.2},
-  restaurant: {label: 'Restoran', front: .10, service: .28, back: .17, circulation: .22, sqmPerGuest: 1.95, defaultTurns: 2.2},
-  retail: {label: 'Perakende', front: .10, service: .09, back: .20, circulation: .25, sqmPerGuest: 2.3, defaultTurns: 4.2},
-  studio: {label: 'Stüdyo / spor', front: .10, service: .12, back: .16, circulation: .22, sqmPerGuest: 3.1, defaultTurns: 2.2}
+  cafe: {label: 'Cafe / quick service', front: .14, service: .19, back: .18, circulation: .20, sqmPerGuest: 1.65, defaultTurns: 3.2},
+  restaurant: {label: 'Restaurant', front: .10, service: .28, back: .17, circulation: .22, sqmPerGuest: 1.95, defaultTurns: 2.2},
+  retail: {label: 'Retail', front: .10, service: .09, back: .20, circulation: .25, sqmPerGuest: 2.3, defaultTurns: 4.2},
+  studio: {label: 'Studio / fitness', front: .10, service: .12, back: .16, circulation: .22, sqmPerGuest: 3.1, defaultTurns: 2.2}
 };
 const serviceParameters = {
   cafe: [['counterLength','Bar uzunluğu (m)',4,1,20],['avgDwell','Ortalama kalış (dk)',55,15,180],['deliveryShare','Paket servis payı (%)',15,0,80]],
@@ -114,8 +114,9 @@ function drawConceptView() {
   const canvas = document.querySelector('#concept-vision-canvas');
   if (!canvas || !layoutEditor) return;
   const context = canvas.getContext('2d'), floor = activeFloor(), model = layoutPayload().plan.model;
-  const width = canvas.width, height = canvas.height, sx = 4.45, sy = 2.05, sz = 3.4;
-  const point = (x, y, z = 0) => conceptViewAngle ? [width / 2 + (y - x) * sx, 500 + (x + y) * sy - z * sz] : [width / 2 + (x - y) * sx, 500 + (x + y) * sy - z * sz];
+  const width = canvas.width, height = canvas.height, sx = Math.min(width / 290, 4.1), sy = Math.min(height / 260, 1.55), sz = 3;
+  const baseY = Math.round(height * .43);
+  const point = (x, y, z = 0) => conceptViewAngle ? [width / 2 + (y - x) * sx, baseY + (x + y) * sy - z * sz] : [width / 2 + (x - y) * sx, baseY + (x + y) * sy - z * sz];
   const polygon = (points, fill, stroke = 'rgba(255,255,255,.18)') => { context.beginPath(); points.forEach(([x, y], index) => index ? context.lineTo(x, y) : context.moveTo(x, y)); context.closePath(); context.fillStyle = fill; context.fill(); context.strokeStyle = stroke; context.lineWidth = 2; context.stroke(); };
   const prism = (item, color, tall = 7) => {
     const x = item.x, y = item.y, w = item.w || 5, h = item.h || 5;
@@ -161,30 +162,30 @@ function drawConceptView() {
   if (back) { furniture({x: back.x + 4, y: back.y + 5, w: Math.max(7, back.w - 8), h: 5}, '#644e5b', 11); furniture({x: back.x + 6, y: back.y + 13, w: 4, h: 4}, '#558d75', 11); }
   [25, 55, 83].forEach(x => { const [px, py] = point(x, 38, 26); const light = context.createRadialGradient(px, py, 1, px, py, 35); light.addColorStop(0, 'rgba(255,240,186,.94)'); light.addColorStop(1, 'rgba(255,240,186,0)'); context.fillStyle = light; context.beginPath(); context.arc(px, py, 34, 0, Math.PI * 2); context.fill(); context.fillStyle = '#fff2c2'; context.beginPath(); context.arc(px, py, 5, 0, Math.PI * 2); context.fill(); });
   context.fillStyle = '#fff5dc'; context.font = '600 25px Arial'; context.fillText(`${layoutEditor.plan.concept} · ${floor.name}`, 34, 52);
-  context.fillStyle = 'rgba(255,255,255,.78)'; context.font = '16px Arial'; context.fillText('Malzeme, mobilya, aydınlatma ve mekânsal akışla canlı iç mekân maketi', 34, 79);
+  context.fillStyle = 'rgba(255,255,255,.78)'; context.font = '16px Arial'; context.fillText('Live interior model with materials, furniture, lighting, and circulation', 34, 79);
 }
 function setVisionStatus(message) { document.querySelector('#vision-render-status').textContent = message; }
 function updateVisionPreview() {
   const vision = document.querySelector('#concept-vision');
   if (vision.hidden) return;
   drawConceptView();
-  document.querySelector('#vision-caption').textContent = 'Duvar, kapı, lavabo, engel, kat ve işletme tipine göre anında güncellenen ücretsiz 3D konsept maketi.';
+  document.querySelector('#vision-caption').textContent = 'A free 3D concept model that updates instantly from walls, doors, sinks, obstacles, floors, and business type.';
 }
 function markVisionStale() {
   const vision = document.querySelector('#concept-vision');
   if (vision.hidden) return;
   vision.dataset.stale = 'true';
   updateVisionPreview();
-  setVisionStatus('Kat planı değişti. Ücretsiz 3D konsept maketi otomatik güncellendi.');
+  setVisionStatus('Floor plan changed. The free 3D concept model updated automatically.');
 }
 function requestConceptRender() {
   if (!layoutEditor) return;
   const payload = layoutPayload();
-  if (lastRenderedSignature === payload.signature) { setVisionStatus('Bu plan görseli zaten güncel.'); return; }
+  if (lastRenderedSignature === payload.signature) { setVisionStatus('This plan visual is already up to date.'); return; }
   updateVisionPreview();
   document.querySelector('#concept-vision').dataset.stale = 'false';
   lastRenderedSignature = payload.signature;
-  setVisionStatus('Ücretsiz 3D konsept maketi güncellendi. Ek API veya kredi kullanılmadı.');
+  setVisionStatus('Free 3D concept model updated. No additional API or credits used.');
 }
 function initialEditorZones(plan) {
   return plan.zones.map((zone, index) => [
@@ -273,8 +274,8 @@ function renderLayoutEditor() {
   };
   document.querySelector('#add-floor').onclick = () => {
     const next = layoutEditor.floors.length + 1;
-    layoutEditor.floors.push({name: `Kat ${next}`, zones: initialEditorZones(layoutEditor.plan), walls: [], obstacles: [], doors: [], sinks: []});
-    layoutEditor.activeFloor = next - 1; layoutEditor.selected = null; renderLayoutEditor(); markVisionStale(); setEditorStatus(`Kat ${next} eklendi. Her kat bağımsız düzenlenebilir.`);
+    layoutEditor.floors.push({name: `Floor ${next}`, zones: initialEditorZones(layoutEditor.plan), walls: [], obstacles: [], doors: [], sinks: []});
+    layoutEditor.activeFloor = next - 1; layoutEditor.selected = null; renderLayoutEditor(); markVisionStale(); setEditorStatus(`Floor ${next} added. Each floor can be edited independently.`);
   };
   document.querySelector('#optimize-layout').onclick = () => {
     const barriers = [...floor.walls, ...floor.obstacles, ...floor.sinks];
@@ -297,7 +298,7 @@ function renderLayoutEditor() {
   };
 }
 function initializeLayoutEditor(plan) {
-  layoutEditor = {plan, activeFloor: 0, tool: 'select', selected: null, floors: [{name: 'Kat 1', zones: initialEditorZones(plan), walls: [], obstacles: [], doors: [], sinks: []}]};
+  layoutEditor = {plan, activeFloor: 0, tool: 'select', selected: null, floors: [{name: 'Floor 1', zones: initialEditorZones(plan), walls: [], obstacles: [], doors: [], sinks: []}]};
   renderLayoutEditor();
 }
 
@@ -308,6 +309,7 @@ function renderPlan(plan) {
   document.querySelector('#layout-badge').textContent = `${integer(plan.area)} m² · ${plan.frontage.toFixed(1)} m cephe`;
   document.querySelector('#layout-plan').innerHTML = `<div class="floor-shell" style="aspect-ratio:${Math.max(.7, Math.min(2.5, plan.frontage / plan.depth))}">${plan.zones.map(zone => `<div class="zone ${zone.className}" style="${zoneStyle(zone, plan)}"><span><b>${text(zone.name)}</b>${integer(zone.area)} m²</span></div>`).join('')}</div>`;
   initializeLayoutEditor(plan);
+  document.querySelector('#studio-result').scrollIntoView({behavior: 'smooth', block: 'start'});
   document.querySelector('#peak-guests').textContent = `${plan.peakGuests} kişi`;
   document.querySelector('#daily-guests').textContent = `${plan.dailyGuests} kişi`;
   const capacityCopy = plan.conceptId === 'accommodation' ? ['Günlük konaklayan', 'doluluk varsayımıyla']
@@ -348,4 +350,4 @@ studioForm.addEventListener('submit', event => {
 });
 
 document.querySelector('#refresh-concept-vision').addEventListener('click', requestConceptRender);
-document.querySelector('#rotate-concept-vision').addEventListener('click', () => { conceptViewAngle = conceptViewAngle ? 0 : 1; drawConceptView(); setVisionStatus('3D konsept maketi farklı açıdan gösteriliyor.'); });
+document.querySelector('#rotate-concept-vision').addEventListener('click', () => { conceptViewAngle = conceptViewAngle ? 0 : 1; drawConceptView(); setVisionStatus('3D concept model shown from a different angle.'); });

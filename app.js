@@ -6,7 +6,7 @@ let activeReport = null;
 const num = (value) => Number(String(value || 0).replace(/[^\d.]/g, '')) || 0;
 const plural = (n, single, many) => `${n.toLocaleString('tr-TR')} ${n === 1 ? single : many}`;
 if (window.location.protocol === 'file:') {
-  status.textContent = 'Canlı rapor için uygulamayı http://localhost:8000 üzerinden açın.';
+  status.textContent = 'Open the app through http://localhost:8000 for a live report.';
 }
 
 function summarize(places) {
@@ -23,7 +23,7 @@ function summarize(places) {
   const density = Math.round(Math.min(100, (places.length / 20) * 48 + Math.log10(reviewAverage + 1) * 11 + (places.length ? openCount / places.length : 0) * 15));
   return { ratings, reviews, openCount, averageRating, reviewTotal, reviewAverage, score, density };
 }
-function densityLabel(density) { return density >= 65 ? 'yüksek' : density >= 38 ? 'orta' : 'düşük'; }
+function densityLabel(density) { return density >= 65 ? 'high' : density >= 38 ? 'moderate' : 'low'; }
 function normalize(value) { return String(value || '').toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g,'i').replace(/ş/g,'s').replace(/ğ/g,'g').replace(/ç/g,'c').replace(/ö/g,'o').replace(/ü/g,'u'); }
 function selectFeatured(places, business, location) {
   const locationTerms = normalize(location).split(/[,\s/]+/).filter(term => term.length > 3 && !['istanbul', 'turkiye', 'turkey'].includes(term));
@@ -60,10 +60,10 @@ function renderConcepts(concepts, location) {
     const matches = selectFeatured(places, name, location);
     return {name, matches, ...summarize(matches)};
   }).filter(item => item.matches.length).sort((a,b) => b.score - a.score);
-  if (!ranked.length) { list.textContent = 'Aday konsept ekleyerek karşılaştırmalı öneri alabilirsiniz.'; return; }
+  if (!ranked.length) { list.textContent = 'Add candidate concepts to receive a comparison-based recommendation.'; return; }
   ranked.forEach((item, index) => {
     const el = document.createElement('div'); el.className = 'concept';
-    const verdict = index === 0 ? 'Önerilen konsept' : item.density >= 65 ? 'Yoğun rekabet' : 'Alternatif seçenek';
+    const verdict = index === 0 ? 'Recommended concept' : item.density >= 65 ? 'High competition' : 'Alternative option';
     const examples = item.matches.slice(0, 2).map(place => place.title).join(' · ');
     el.innerHTML = `<span class="concept-rank">${index + 1}</span><span><strong>${escapeHtml(item.name)}</strong><small>${verdict} · ${item.matches.length} uyumlu işletme · ${item.density}% yoğunluk</small></span><span><small>${item.reviewTotal.toLocaleString('tr-TR')} yorum · ${item.averageRating ? item.averageRating.toFixed(1) : '—'} puan<br>${escapeHtml(examples)}</small></span><span class="concept-score">${item.score}<small>/100</small></span>`;
     list.append(el);
@@ -80,7 +80,7 @@ function financeProfile(business) {
 
 function resolveFinance(business, finance, analysis) {
   const mode = document.querySelector('input[name="financeMode"]:checked')?.value || 'manual';
-  if (mode === 'manual') return {...finance, source: 'Kullanıcı varsayımları', confidence: 'kira ve gider teklifleri girildiğinde daha güvenilir'};
+  if (mode === 'manual') return {...finance, source: 'User assumptions', confidence: 'more reliable once rent and operating-cost quotes are entered'};
   const profile = financeProfile(business);
   const marketFactor = .62 + (analysis.components.demand / 100) * .42 + (analysis.components.accessibility / 100) * .14;
   const dailyTransactions = Math.max(20, Math.round(profile.dailyBase * marketFactor));
@@ -91,8 +91,8 @@ function resolveFinance(business, finance, analysis) {
     margin: profile.margin,
     rent: Math.round(monthlyRevenue * .10 / 1000) * 1000,
     fixedCosts: Math.round((monthlyRevenue * .20 + 25000) / 1000) * 1000,
-    source: `Otomatik başlangıç senaryosu · ${profile.label}`,
-    confidence: 'tahmini — yerel kira ve maaş teklifleriyle değiştirin',
+    source: `Automatic starting scenario · ${profile.label}`,
+    confidence: 'estimated — replace with local rent and payroll quotes',
     estimatedDailyTransactions: dailyTransactions,
   };
   document.querySelector('[name="rent"]').value = suggested.rent;
@@ -127,16 +127,16 @@ function renderBusinessPlan(stats, business, finance) {
 }
 
 const COMPONENT_LABELS = {
-  demand: 'Talep', commercial_activity: 'Ticari hareketlilik', target_customer_presence: 'Hedef müşteri',
-  accessibility: 'Erişilebilirlik', competition_gap: 'Rekabet boşluğu', neighbor_market_signal: 'Komşu pazar sinyali',
-  location_compatibility: 'Konum uyumu'
+  demand: 'Demand', commercial_activity: 'Commercial activity', target_customer_presence: 'Target customer presence',
+  accessibility: 'Accessibility', competition_gap: 'Competition gap', neighbor_market_signal: 'Neighbour market signal',
+  location_compatibility: 'Location compatibility'
 };
 const MODE_LABELS = { demand_validation: 'Demand Validation Mode', early_market: 'Early Market Analysis', competition: 'Competition Analysis' };
-const PROXY_LABELS = { commercial_activity: 'Restoran · perakende · market', target_customer_presence: 'Okul · ofis · otel · spor', accessibility: 'Toplu taşıma', indirect_demand: 'Dolaylı talep işletmeleri' };
+const PROXY_LABELS = { commercial_activity: 'Restaurants · retail · grocery', target_customer_presence: 'Schools · offices · hotels · fitness', accessibility: 'Public transport', indirect_demand: 'Indirect demand businesses' };
 
 function renderViability(analysis) {
   document.querySelector('#analysis-mode').textContent = MODE_LABELS[analysis.mode] || analysis.mode;
-  document.querySelector('#data-confidence').textContent = `Veri güveni: ${analysis.confidence.level} · %${analysis.confidence.score}`;
+  document.querySelector('#data-confidence').textContent = `Data confidence: ${analysis.confidence.level} · ${analysis.confidence.score}%`;
   document.querySelector('#viability-components').innerHTML = Object.entries(analysis.components).map(([key, value]) => {
     const weight = Math.round((analysis.weights[key] || 0) * 100);
     return `<article><div><span>${escapeHtml(COMPONENT_LABELS[key] || key)}</span><b>%${weight}</b></div><strong>${value}<small>/100</small></strong><i><em style="width:${value}%"></em></i></article>`;
@@ -144,10 +144,10 @@ function renderViability(analysis) {
   document.querySelector('#neighbor-signal').textContent = `${analysis.components.neighbor_market_signal}/100`;
   document.querySelector('#radius-ladder').innerHTML = Object.entries(analysis.neighbor_market.radius_counts).map(([radius, count]) => `<span><b>${Number(radius) / 1000 < 1 ? radius + ' m' : Number(radius) / 1000 + ' km'}</b>${count} işletme</span>`).join('');
   const proxyEntries = Object.entries(analysis.proxy_counts || {});
-  document.querySelector('#proxy-summary').textContent = `${proxyEntries.reduce((sum, [, count]) => sum + count, 0)} görünür sinyal`;
+  document.querySelector('#proxy-summary').textContent = `${proxyEntries.reduce((sum, [, count]) => sum + count, 0)} visible signals`;
   document.querySelector('#proxy-list').innerHTML = proxyEntries.map(([key, count]) => `<span><b>${escapeHtml(PROXY_LABELS[key] || key)}</b>${count} sonuç</span>`).join('');
   document.querySelector('#viability-reasons').innerHTML = analysis.reasons.map(reason => `<li>${escapeHtml(reason)}</li>`).join('');
-  document.querySelector('#viability-limitations').textContent = `Sınırlar: ${analysis.limitations.join(' ')}`;
+  document.querySelector('#viability-limitations').textContent = `Limits: ${analysis.limitations.join(' ')}`;
   const method = analysis.evaluation_method;
   const methodPanel = document.querySelector('#evaluation-method');
   if (method) {
@@ -161,7 +161,7 @@ function renderViability(analysis) {
 function renderLocationMap(business, location, places, stats) {
   const frame = document.querySelector('#location-map');
   frame.src = `https://www.google.com/maps?q=${encodeURIComponent(`${business} ${location}`)}&output=embed`;
-  document.querySelector('#map-location').textContent = `${location} çevresinde ${business} için canlı görünüm`;
+  document.querySelector('#map-location').textContent = `Live view for ${business} around ${location}`;
   document.querySelector('#map-density').textContent = `%${stats.density}`;
   document.querySelector('#map-rating').textContent = stats.averageRating ? `${stats.averageRating.toFixed(1)} / 5` : '—';
   document.querySelector('#map-business-count').textContent = places.length.toLocaleString('tr-TR');
@@ -171,7 +171,7 @@ function renderLocationMap(business, location, places, stats) {
     const item = document.createElement('article');
     item.className = 'map-business';
     const rating = Number(place.rating);
-    item.innerHTML = `<span>${String(index + 1).padStart(2, '0')}</span><div><strong>${escapeHtml(place.title || place.name || 'İsimsiz işletme')}</strong><small>${escapeHtml(place.address || place.type || 'Yakın çevre')}</small></div><b>${Number.isFinite(rating) && rating >= 0 && rating <= 5 ? rating.toFixed(1) : '—'}<small>/5</small></b>`;
+    item.innerHTML = `<span>${String(index + 1).padStart(2, '0')}</span><div><strong>${escapeHtml(place.title || place.name || 'Unnamed business')}</strong><small>${escapeHtml(place.address || place.type || 'Nearby area')}</small></div><b>${Number.isFinite(rating) && rating >= 0 && rating <= 5 ? rating.toFixed(1) : '—'}<small>/5</small></b>`;
     list.append(item);
   });
 }

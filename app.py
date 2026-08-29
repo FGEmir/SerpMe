@@ -139,43 +139,43 @@ def build_market_analysis(direct_by_radius, proxy_results, live):
     score = round(sum(components[key] * weight for key, weight in weights.items()))
     evidence_groups = 1 + len([items for items in proxy_results.values() if items])
     confidence_score = min(90 if live else 55, 28 + evidence_groups * 12 + (12 if all_direct else 0))
-    confidence = "yüksek" if confidence_score >= 75 else "orta" if confidence_score >= 50 else "düşük"
+    confidence = "high" if confidence_score >= 75 else "medium" if confidence_score >= 50 else "low"
     if location_compatibility < 25 and demand < 30:
-        classification = "İşletme tipi bölgeyle uyumsuz"
+        classification = "Business type is incompatible with this location"
     elif mode == "demand_validation" and (confidence_score < 65 or demand < 55):
-        classification = "Talep belirsiz — doğrulama gerekli"
+        classification = "Demand is uncertain — validation required"
     elif score >= 58:
-        classification = "Fırsat"
+        classification = "Opportunity"
     else:
-        classification = "Talep belirsiz — doğrulama gerekli"
+        classification = "Demand is uncertain — validation required"
     reasons = []
-    reasons.append(f"500 m içinde {direct_count} doğrudan rakip bulundu; bu tek başına fırsat olarak yorumlanmadı.")
+    reasons.append(f"{direct_count} direct competitors were found within 500 m; this alone was not treated as an opportunity.")
     if outer_count > direct_count:
-        reasons.append(f"Komşu pazarda 5 km'ye kadar {outer_count} benzersiz doğrudan işletme sinyali var.")
+        reasons.append(f"The wider market shows {outer_count} unique direct-business signals within 5 km.")
     if commercial:
-        reasons.append(f"Restoran, perakende ve market görünürlüğü ticari aktiviteyi {commercial}/100 düzeyinde destekliyor.")
+        reasons.append(f"Restaurant, retail, and grocery visibility supports commercial activity at {commercial}/100.")
     if not proxy_results:
-        reasons.append("Talep proxy sorguları mevcut veri/kota koşullarında çalışmadı; sonuç güveni düşürüldü.")
+        reasons.append("Demand-proxy searches were unavailable under current data or quota conditions; confidence was reduced.")
     if mode == "demand_validation":
         method = {
             "id": "catchment_proxy_validation",
-            "title": "Talep havzası doğrulaması",
-            "summary": "Doğrudan emsal yetersiz olduğu için sonuç, rakip sayısına değil çevredeki ticari hareket, hedef müşteri varlığı, erişim ve komşu pazar sinyallerine dayanır.",
+            "title": "Catchment demand validation",
+            "summary": "Because direct comparables are limited, the result relies on surrounding commercial activity, target-customer presence, accessibility, and neighbour-market signals rather than competitor count.",
             "steps": [
-                "Sabah, öğle ve akşam aynı noktada 15'er dakikalık yaya sayımı yapın.",
-                "En az 15 potansiyel müşteriyle ihtiyaç ve fiyat hassasiyeti görüşmesi yapın.",
-                "7–14 günlük düşük maliyetli menü, pop-up veya ön sipariş testiyle gerçek talebi ölçün.",
+                "Run 15-minute footfall counts at the same point in the morning, lunch, and evening.",
+                "Interview at least 15 potential customers about needs and price sensitivity.",
+                "Measure real demand with a 7–14 day low-cost menu, pop-up, or pre-order test.",
             ],
         }
     else:
         method = {
             "id": "direct_competitor_benchmark",
-            "title": "Doğrudan emsal karşılaştırması",
-            "summary": "Yeterli sayıda doğrudan emsal bulunduğu için puan, yorum hacmi, yoğunluk ve çevresel sinyaller birlikte karşılaştırılır.",
+            "title": "Direct comparable benchmark",
+            "summary": "Because sufficient direct comparables were found, ratings, review volume, density, and surrounding signals are assessed together.",
             "steps": [
-                "En güçlü üç rakibin fiyat, menü, servis hızı ve yorum temalarını karşılaştırın.",
-                "Kira teklifi ile günlük başa baş işlem hedefini aynı senaryoda test edin.",
-                "Farklılaşma teklifinizi sınırlı bir müşteri testiyle doğrulayın.",
+                "Compare pricing, menu, service speed, and review themes for the strongest three competitors.",
+                "Test the rent quote and daily break-even transactions in the same scenario.",
+                "Validate your differentiation proposition with a limited customer test.",
             ],
         }
     return {
@@ -311,7 +311,6 @@ class AppHandler(SimpleHTTPRequestHandler):
             "q": f"{business} · {location} · {radius} metre çevresi",
             "api_key": api_key,
             "hl": "tr",
-            "z": radius_zoom(radius),
         }
         with urlopen("https://serpapi.com/search.json?" + urlencode(params), timeout=25) as response:
             return json.load(response)

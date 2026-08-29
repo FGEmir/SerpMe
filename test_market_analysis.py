@@ -23,7 +23,7 @@ class MarketAnalysisTests(unittest.TestCase):
     def test_zero_competition_is_not_automatically_an_opportunity(self):
         result = self.analysis(0, proxies=False)
         self.assertNotEqual(result["classification"], "Fırsat")
-        self.assertEqual(result["confidence"]["level"], "düşük")
+        self.assertEqual(result["confidence"]["level"], "low")
 
     def test_sparse_market_uses_catchment_validation_instead_of_fake_comparables(self):
         result = self.analysis(2)

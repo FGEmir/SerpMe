@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Konsept Stüdyosu — SerpMe</title>
+  <title>Concept Studio — SerpMe</title>
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="liquid.css" />
   <link rel="stylesheet" href="smooth.css" />
@@ -17,33 +17,33 @@
 </head>
 <body>
   <main class="site-page launch-page">
-    <nav class="page-nav" aria-label="Ana menü">
+    <nav class="page-nav" aria-label="Main navigation">
       <a class="brand" href="/"><span class="logo" aria-hidden="true"><i></i><i></i><i></i></span><span>Serp<span class="brand-accent">Me</span></span><small>MARKET INTELLIGENCE</small></a>
-      <div class="nav-links"><a href="/">Analiz</a><a href="/about.html">Hakkımızda</a><a class="nav-cta" data-auth-link href="/login.html">Giriş</a></div>
+      <div class="nav-links"><a href="/">Analysis</a><a href="/about.html">About</a><a class="nav-cta" data-auth-link href="/login.html">Sign in</a></div>
     </nav>
-    <header class="studio-hero"><p class="eyebrow">KONSEPT STÜDYOSU · ÖN TASARIM</p><h1>Mekânı fikrine göre <em>planla.</em></h1><p>Alan, cephe, konsept ve servis modelinden operasyonel yerleşim ile kapasite senaryosu oluşturun. Bu bir ön tasarım aracıdır; yangın, erişilebilirlik ve ruhsat projelerinin yerine geçmez.</p></header>
+    <header class="studio-hero"><p class="eyebrow">CONCEPT STUDIO · EARLY DESIGN</p><h1>Plan a space around your <em>idea.</em></h1><p>Create an operating layout and capacity scenario from area, frontage, concept, and service model. This is an early design tool and does not replace fire, accessibility, or permitting plans.</p></header>
     <section class="studio-grid">
       <form id="studio-form" class="studio-form">
-        <p class="eyebrow">MEKÂN GİRDİLERİ</p>
-        <h2>İşletme özellikleri</h2>
-        <label>Hizmet grubu<select id="studio-category" name="category"></select></label>
-        <label>Konsept<select id="studio-concept" name="concept"></select></label>
-        <label>Servis modeli<select name="model"><option value="cafe">Kafe / hızlı servis</option><option value="restaurant">Restoran</option><option value="retail">Perakende</option><option value="studio">Stüdyo / spor</option></select></label>
-        <div class="studio-input-grid"><label>Net alan (m²)<input name="area" type="number" min="20" max="2000" value="110" required /></label><label>Cephe genişliği (m)<input name="frontage" type="number" min="3" max="80" step=".5" value="8" required /></label></div>
-        <div class="studio-input-grid"><label>Hedef oturma oranı<select name="seating"><option value="balanced">Dengeli</option><option value="dense">Yüksek kapasite</option><option value="spacious">Konfor odaklı</option></select></label><label id="turns-control">Günlük servis periyodu<select name="turns"><option value="2.2">2,2 tur · sakin</option><option value="3.2" selected>3,2 tur · dengeli</option><option value="4.2">4,2 tur · hızlı servis</option></select></label></div>
-        <label class="toggle-label"><input name="accessible" type="checkbox" checked /> Erişilebilir dolaşım alanını koru</label>
+        <p class="eyebrow">SPACE INPUTS</p>
+        <h2>Business characteristics</h2>
+        <label>Service category<select id="studio-category" name="category"></select></label>
+        <label>Concept<select id="studio-concept" name="concept"></select></label>
+        <label>Operating model<select name="model"><option value="cafe">Cafe / quick service</option><option value="restaurant">Restaurant</option><option value="retail">Retail</option><option value="studio">Studio / fitness</option></select></label>
+        <div class="studio-input-grid"><label>Net area (m²)<input name="area" type="number" min="20" max="2000" value="110" required /></label><label>Frontage width (m)<input name="frontage" type="number" min="3" max="80" step=".5" value="8" required /></label></div>
+        <div class="studio-input-grid"><label>Seating target<select name="seating"><option value="balanced">Balanced</option><option value="dense">High capacity</option><option value="spacious">Comfort-first</option></select></label><label id="turns-control">Daily service turns<select name="turns"><option value="2.2">2.2 turns · relaxed</option><option value="3.2" selected>3.2 turns · balanced</option><option value="4.2">4.2 turns · quick service</option></select></label></div>
+        <label class="toggle-label"><input name="accessible" type="checkbox" checked /> Preserve accessible circulation</label>
         <div id="studio-parameters" class="studio-parameters"></div>
-        <button type="submit">Yerleşimi optimize et <span>→</span></button>
-        <p class="studio-note">Kapasite, net operasyon alanı ve servis turu varsayımından üretilir. Yasal kişi kapasitesi için yetkili mimar ve yerel mevzuat kontrolü gerekir.</p>
+        <button type="submit">Generate recommended layout <span>→</span></button>
+        <p class="studio-note">Capacity is generated from net operating area and service-turn assumptions. A licensed architect and local regulations must confirm legal capacity.</p>
       </form>
       <section id="studio-output" class="studio-output" aria-live="polite">
-        <div class="studio-empty"><span>⌁</span><h2>Planınız burada oluşacak.</h2><p>Girdileri düzenleyip yerleşimi oluşturun.</p></div>
+        <div class="studio-empty"><span>⌁</span><h2>Your plan will appear here.</h2><p>Adjust the inputs and generate a recommended layout.</p></div>
         <div id="studio-result" hidden>
-          <div class="studio-title"><div><p class="eyebrow">ÖNERİLEN YERLEŞİM</p><h2 id="layout-title">—</h2></div><span id="layout-badge">—</span></div>
+          <div class="studio-title"><div><p class="eyebrow">RECOMMENDED LAYOUT</p><h2 id="layout-title">—</h2></div><span id="layout-badge">—</span></div>
           <div id="layout-plan" class="layout-plan" role="img" aria-label="Önerilen mekân yerleşimi"></div>
-          <section class="layout-editor" aria-label="Yerleşim planı düzenleyicisi">
-            <div class="editor-header"><div><p class="eyebrow">DÜZENLENEBİLİR PLAN</p><h3>Plan üzerinde çalışın</h3></div><span>Ögeleri sürükleyin; araç seçip plana tıklayarak engel ekleyin.</span></div>
-            <div class="editor-toolbar" role="toolbar" aria-label="Plan araçları"><button type="button" data-tool="select" class="is-active">Taşı</button><button type="button" data-tool="wall">Duvar ekle</button><button type="button" data-tool="obstacle">Engel ekle</button><button type="button" data-tool="door">Kapı ekle</button><button type="button" data-tool="sink">Lavabo ekle</button><button type="button" id="delete-layout-item">Seçileni sil</button><button type="button" id="add-floor">Kat ekle</button><button type="button" id="optimize-layout">Engellere göre optimize et</button><button type="button" id="approve-layout">Planı onayla</button></div>
+          <section class="layout-editor" aria-label="Layout plan editor">
+            <div class="editor-header"><div><p class="eyebrow">EDITABLE PLAN</p><h3>Work on the plan</h3></div><span>Drag items; choose a tool and click the plan to add a constraint.</span></div>
+            <div class="editor-toolbar" role="toolbar" aria-label="Plan tools"><button type="button" data-tool="select" class="is-active">Move</button><button type="button" data-tool="wall">Add wall</button><button type="button" data-tool="obstacle">Add obstacle</button><button type="button" data-tool="door">Add door</button><button type="button" data-tool="sink">Add sink</button><button type="button" id="delete-layout-item">Delete selected</button><button type="button" id="add-floor">Add floor</button><button type="button" id="optimize-layout">Optimize for constraints</button><button type="button" id="approve-layout">Approve plan</button></div>
             <div id="floor-tabs" class="floor-tabs" aria-label="Katlar"></div>
             <div id="editor-canvas" class="editor-canvas" aria-label="Düzenlenebilir kat planı"></div>
             <div id="selected-item-controls" class="selected-item-controls" hidden><label>Şekil<select id="item-shape"><option value="rectangle">Dikdörtgen</option><option value="rounded">Yuvarlatılmış</option><option value="circle">Daire</option></select></label><label>Genişlik<input id="item-width" type="range" min="4" max="70" value="20" /></label><label>Yükseklik<input id="item-height" type="range" min="4" max="70" value="20" /></label><label>Döndürme<input id="item-rotation" type="range" min="0" max="180" value="0" /></label></div>
@@ -55,7 +55,7 @@
         </div>
       </section>
     </section>
-    <footer class="site-footer"><span>© 2026 Fzl Studio</span><span>SerpMe · Konum tabanlı pazar istihbaratı</span><a href="/about.html">Hakkımızda</a></footer>
+    <footer class="site-footer"><span>© SerpMe</span><span>Location-based market intelligence</span><a href="/about.html">About</a></footer>
   </main>
   <script src="supabase-config.js"></script><script src="auth.js"></script><script src="catalog.js?v=20260829-catalog"></script><script src="launch.js?v=20260829-layout-vision-v1"></script>
 </body>

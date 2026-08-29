@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SerpMe — Konum Bazlı İşletme Analizi</title>
+  <title>SerpMe — Location-Based Business Analysis</title>
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="liquid.css" />
   <link rel="stylesheet" href="viability.css" />
@@ -13,120 +13,120 @@
 <body>
   <main>
     <section class="hero">
-      <nav class="top-nav" aria-label="Ana menü">
-        <a class="brand" href="/" aria-label="SerpMe ana sayfa"><span class="logo" aria-hidden="true"><i></i><i></i><i></i></span><span>Serp<span class="brand-accent">Me</span></span><small>MARKET INTELLIGENCE</small></a>
-        <div class="nav-links"><a href="/launch.html">Konsept Stüdyosu</a><a href="/about.html">Hakkımızda</a><a class="nav-cta" data-auth-link href="/login.html">Giriş</a></div>
+      <nav class="top-nav" aria-label="Main navigation">
+        <a class="brand" href="/" aria-label="SerpMe home"><span class="logo" aria-hidden="true"><i></i><i></i><i></i></span><span>Serp<span class="brand-accent">Me</span></span><small>MARKET INTELLIGENCE</small></a>
+        <div class="nav-links"><a href="/launch.html">Concept Studio</a><a href="/about.html">About</a><a class="nav-cta" data-auth-link href="/login.html">Sign in</a></div>
       </nav>
       <div class="hero-copy">
         <p class="eyebrow">SERPAPI × GOOGLE MAPS · MARKET SIGNALS</p>
-        <h1>Hayalini <em>gerçeğe</em> dönüştür.</h1>
-        <p>Bir işletme türü ve detaylı adres girin. Yerel rekabeti, müşteri sinyallerini ve yatırım fırsatını saniyeler içinde görün.</p>
+        <h1>Turn your vision into <em>reality.</em></h1>
+        <p>Enter a business type and a precise address. See local competition, customer signals, and investment potential in seconds.</p>
       </div>
       <form id="search-form" class="search-card">
-        <label>İşletme tipi
-          <input id="business" name="business" maxlength="120" placeholder="Örn. üçüncü nesil kahve" required value="kahve dükkanı" />
+        <label>Business type
+          <input id="business" name="business" maxlength="120" placeholder="e.g. specialty coffee" required value="coffee shop" />
         </label>
-        <label>Hedef mikro konum
-          <input id="location" name="location" maxlength="200" placeholder="Mahalle, cadde, kapı no, şehir" required value="Caferağa, Kadıköy, İstanbul" />
+        <label>Target micro-location
+          <input id="location" name="location" maxlength="200" placeholder="Neighbourhood, street, building no., city" required value="Caferağa, Kadıköy, Istanbul" />
         </label>
-        <label>Tarama yarıçapı
+        <label>Search radius
           <select id="radius" name="radius">
-            <option value="500">500 m · sokak ölçeği</option>
-            <option value="1000" selected>1 km · mahalle ölçeği</option>
-            <option value="2000">2 km · ilçe yakın çevresi</option>
-            <option value="5000">5 km · geniş alan</option>
+            <option value="500">500 m · street scale</option>
+            <option value="1000" selected>1 km · neighbourhood scale</option>
+            <option value="2000">2 km · district edge</option>
+            <option value="5000">5 km · wider catchment</option>
           </select>
         </label>
-        <label class="wide">Karşılaştırılacak konseptler
-          <input id="concepts" name="concepts" maxlength="360" placeholder="Virgülle ayırın" value="brunch kafe, tatlıcı, çalışma kafe" />
+        <label class="wide">Concepts to compare
+          <input id="concepts" name="concepts" maxlength="360" placeholder="Separate with commas" value="brunch cafe, dessert shop, study cafe" />
         </label>
         <details class="finance-inputs wide">
-          <summary>Finansal varsayımlar — başa baş analizi için</summary>
-          <div class="finance-mode" role="group" aria-label="Finansal varsayım yöntemi">
-            <label><input type="radio" name="financeMode" value="auto" checked /> Otomatik başlangıç senaryosu</label>
-            <label><input type="radio" name="financeMode" value="manual" /> Kendi varsayımlarım</label>
+          <summary>Financial assumptions — for break-even analysis</summary>
+          <div class="finance-mode" role="group" aria-label="Financial assumption method">
+            <label><input type="radio" name="financeMode" value="auto" checked /> Automatic starting scenario</label>
+            <label><input type="radio" name="financeMode" value="manual" /> My assumptions</label>
           </div>
-          <p class="finance-note">Otomatik senaryo; işletme türü ve harita sinyallerinden başlangıç aralığı üretir. Yerel kira, maaş ve tedarik teklifleriyle doğrulanmalıdır.</p>
+          <p class="finance-note">The automatic scenario produces a starting range from the business type and map signals. Validate it with local rent, payroll, and supplier quotes.</p>
           <div class="finance-grid">
-            <label>Aylık kira (₺)<input name="rent" type="number" min="0" value="120000" /></label>
-            <label>Aylık sabit gider (₺)<input name="fixedCosts" type="number" min="0" value="90000" /></label>
-            <label>Ortalama sepet (₺)<input name="ticket" type="number" min="1" value="300" /></label>
-            <label>Brüt marj (%)<input name="margin" type="number" min="1" max="99" value="65" /></label>
+            <label>Monthly rent (₺)<input name="rent" type="number" min="0" value="120000" /></label>
+            <label>Monthly fixed costs (₺)<input name="fixedCosts" type="number" min="0" value="90000" /></label>
+            <label>Average transaction (₺)<input name="ticket" type="number" min="1" value="300" /></label>
+            <label>Gross margin (%)<input name="margin" type="number" min="1" max="99" value="65" /></label>
           </div>
         </details>
-        <button type="submit">Pazarı analiz et <span>→</span></button>
-        <p class="hint">Mahalle, cadde veya açık adres yazın. Daha detaylı adres, daha doğru karşılaştırma sağlar; her konsept ek bir canlı API sorgusu kullanır.</p>
+        <button type="submit">Analyze market <span>→</span></button>
+        <p class="hint">Enter a neighbourhood, street, or full address. More detail produces a more precise comparison; each concept uses one additional live API search.</p>
         <p id="form-status" class="form-status" role="status" aria-live="polite"></p>
       </form>
     </section>
 
     <section id="empty-state" class="empty-state">
       <span>↗</span>
-      <p>Raporunuz burada oluşacak.</p>
+      <p>Your report will appear here.</p>
     </section>
 
     <section id="report" hidden>
       <div class="report-heading">
-        <div><p class="eyebrow">YEREL PAZAR RAPORU <span id="data-source"></span></p><h2 id="report-title">—</h2><p id="report-date"></p></div>
-        <button id="export-button" class="secondary">Raporu yazdır</button>
+        <div><p class="eyebrow">LOCAL MARKET REPORT <span id="data-source"></span></p><h2 id="report-title">—</h2><p id="report-date"></p></div>
+        <button id="export-button" class="secondary">Print report</button>
       </div>
       <div class="score-card">
         <div class="score-ring"><strong id="opportunity-score">—</strong><span>/ 100</span></div>
-        <div><p class="eyebrow">MARKET VIABILITY SCORE</p><h3 id="opportunity-label">Hesaplanıyor</h3><p id="opportunity-text"></p><div class="analysis-badges"><span id="analysis-mode">—</span><span id="data-confidence">—</span></div></div>
+        <div><p class="eyebrow">MARKET VIABILITY SCORE</p><h3 id="opportunity-label">Calculating</h3><p id="opportunity-text"></p><div class="analysis-badges"><span id="analysis-mode">—</span><span id="data-confidence">—</span></div></div>
       </div>
       <section class="viability-section" aria-labelledby="viability-title">
-        <div class="section-heading"><div><p class="eyebrow">KANITA DAYALI ALT SKORLAR</p><h3 id="viability-title">Pazar uygulanabilirliği</h3></div><p>Eksik sinyaller tahmin edilmez; veri yokluğu güven düzeyine yansır.</p></div>
+        <div class="section-heading"><div><p class="eyebrow">EVIDENCE-BASED SUB-SCORES</p><h3 id="viability-title">Market viability</h3></div><p>Missing signals are not invented; unavailable data is reflected in the confidence level.</p></div>
         <div id="viability-components" class="viability-components"></div>
         <div class="signal-grid">
           <article><p class="eyebrow">NEIGHBOR MARKET SIGNAL</p><h3 id="neighbor-signal">—</h3><div id="radius-ladder" class="radius-ladder"></div></article>
-          <article><p class="eyebrow">TALEP PROXY'LERİ</p><h3 id="proxy-summary">—</h3><div id="proxy-list" class="proxy-list"></div></article>
+          <article><p class="eyebrow">DEMAND PROXIES</p><h3 id="proxy-summary">—</h3><div id="proxy-list" class="proxy-list"></div></article>
         </div>
-        <div class="reasoning-panel"><h4>Bu sonuca neden ulaştık?</h4><ul id="viability-reasons"></ul><p id="viability-limitations"></p></div>
+        <div class="reasoning-panel"><h4>Why this conclusion?</h4><ul id="viability-reasons"></ul><p id="viability-limitations"></p></div>
         <div id="evaluation-method" class="evaluation-method" hidden>
-          <p class="eyebrow">ALTERNATİF DEĞERLENDİRME YÖNTEMİ</p><h4 id="evaluation-method-title"></h4><p id="evaluation-method-summary"></p><ol id="evaluation-method-steps"></ol>
+          <p class="eyebrow">ALTERNATIVE EVALUATION METHOD</p><h4 id="evaluation-method-title"></h4><p id="evaluation-method-summary"></p><ol id="evaluation-method-steps"></ol>
         </div>
       </section>
       <div class="metric-grid" id="metrics"></div>
       <section class="map-section" aria-labelledby="map-title">
         <div class="map-copy">
-          <p class="eyebrow">KONUM KATMANI</p><h3 id="map-title">Yakın çevre görünümü</h3><p id="map-location"></p>
-          <div class="map-stats"><article><span>Harita yoğunluğu</span><strong id="map-density">—</strong></article><article><span>Ort. puan</span><strong id="map-rating">—</strong></article><article><span>İncelenen işletme</span><strong id="map-business-count">—</strong></article></div>
-          <p class="map-note">İşletmeler, girilen açık adres ve seçilen kategoriyle eşleşen Google Maps sonuçlarından alınır.</p>
+          <p class="eyebrow">LOCATION LAYER</p><h3 id="map-title">Nearby market view</h3><p id="map-location"></p>
+          <div class="map-stats"><article><span>Map density</span><strong id="map-density">—</strong></article><article><span>Average rating</span><strong id="map-rating">—</strong></article><article><span>Businesses reviewed</span><strong id="map-business-count">—</strong></article></div>
+          <p class="map-note">Businesses are drawn from Google Maps results matching the entered address and selected category.</p>
         </div>
         <div class="map-frame-wrap"><iframe id="location-map" title="Seçilen konumun haritası" loading="lazy" referrerpolicy="no-referrer"></iframe></div>
         <div class="map-businesses" id="map-businesses"></div>
       </section>
       <div class="insight-grid">
-        <article><p class="eyebrow">NE GÖRÜYORUZ?</p><h3>Rekabet görünümü</h3><p id="competition-insight"></p></article>
-        <article><p class="eyebrow">MÜŞTERİ SİNYALİ</p><h3>Memnuniyet & talep</h3><p id="customer-insight"></p></article>
-        <article><p class="eyebrow">ÖNERİ</p><h3>Bir sonraki hamle</h3><p id="recommendation"></p></article>
+        <article><p class="eyebrow">WHAT WE SEE</p><h3>Competition view</h3><p id="competition-insight"></p></article>
+        <article><p class="eyebrow">CUSTOMER SIGNAL</p><h3>Satisfaction & demand</h3><p id="customer-insight"></p></article>
+        <article><p class="eyebrow">RECOMMENDATION</p><h3>Next move</h3><p id="recommendation"></p></article>
       </div>
       <section class="concept-section">
-        <div><p class="eyebrow">KONSEPT ÖNERİSİ</p><h3>Bu konumda hangi fikir daha güçlü?</h3><p>Her aday; yalnızca aynı mikro-konumda ve aday kategoriyle eşleşen Google Maps işletmeleri üzerinden karşılaştırılır.</p></div>
+        <div><p class="eyebrow">CONCEPT RECOMMENDATION</p><h3>Which idea is stronger at this location?</h3><p>Each candidate is compared only against Google Maps businesses matching the same micro-location and category.</p></div>
         <div id="concept-list" class="concept-list"></div>
       </section>
       <section class="business-plan">
-        <div><p class="eyebrow">BİRİM EKONOMİ & OPERASYON PLANI</p><h3>Yatırım kararı için teknik çerçeve</h3><p id="plan-summary"></p></div>
+        <div><p class="eyebrow">UNIT ECONOMICS & OPERATING PLAN</p><h3>A technical framework for an investment decision</h3><p id="plan-summary"></p></div>
         <div class="plan-grid" id="plan-metrics"></div>
         <ol id="plan-actions" class="plan-actions"></ol>
-        <p class="disclaimer">Finansal sonuçlar kullanıcı tarafından girilen varsayımlardan türetilir; vergi, yatırım harcaması, kredi maliyeti ve amortisman dahil değildir.</p>
+        <p class="disclaimer">Financial results are derived from user inputs; tax, capital expenditure, financing cost, and depreciation are excluded.</p>
       </section>
       <section class="feasibility-section">
-        <div><p class="eyebrow">FİZİBİLİTE ADIMI</p><h3>Fikri yatırım kararına yaklaştırın</h3><p>Riskleri, doğrulama önceliklerini ve ilk aksiyonu kayda alarak bu analizi portföyünüze ekleyin.</p></div>
+        <div><p class="eyebrow">FEASIBILITY STEP</p><h3>Move the idea toward an investment decision</h3><p>Save this analysis to your portfolio with risks, validation priorities, and the first action.</p></div>
         <div class="feasibility-grid">
-          <label>Fikir adı<input id="feasibility-title" placeholder="Örn. Caferağa çalışma kafesi" /></label>
-          <label>Aşama<select id="feasibility-stage"><option>Fikir</option><option>Araştırma</option><option>Doğrulama</option><option>Yatırım</option></select></label>
-          <label class="wide">Doğrulama notu<textarea id="feasibility-notes" placeholder="Saha sayımı, kira teklifi, menü testi veya kritik varsayım..."></textarea></label>
-          <button id="save-report-button" type="button">Portföye ve rapora kaydet <span>→</span></button><p id="save-status" class="form-status" role="status"></p>
+          <label>Idea name<input id="feasibility-title" placeholder="e.g. Caferağa study cafe" /></label>
+          <label>Stage<select id="feasibility-stage"><option>Idea</option><option>Research</option><option>Validation</option><option>Investment</option></select></label>
+          <label class="wide">Validation note<textarea id="feasibility-notes" placeholder="Footfall count, rent quote, menu test, or critical assumption..."></textarea></label>
+          <button id="save-report-button" type="button">Save to portfolio and report <span>→</span></button><p id="save-status" class="form-status" role="status"></p>
         </div>
       </section>
       <section class="results-section">
-        <div><p class="eyebrow">KARŞILAŞTIRMA SETİ</p><h3>Öne çıkan yerel işletmeler</h3><p class="selection-note">Konum, işletme tipi, puan, yorum hacmi ve Google Maps sırası ile seçilir.</p></div>
+        <div><p class="eyebrow">COMPARISON SET</p><h3>Featured local businesses</h3><p class="selection-note">Selected by location, business type, rating, review volume, and Google Maps rank.</p></div>
         <div class="result-list" id="result-list"></div>
       </section>
-      <p class="disclaimer">Fırsat skoru; listelenen işletme sayısı, ortalama puan, yorum yoğunluğu ve açık işletme oranından hesaplanan keşif göstergesidir. Nihai yatırım kararı öncesinde saha araştırması önerilir.</p>
+      <p class="disclaimer">The opportunity score is an exploratory indicator based on listed business count, average rating, review density, and open-business rate. Field research is recommended before a final investment decision.</p>
     </section>
-    <footer class="site-footer"><span>© 2026 Fzl Studio</span><span>SerpMe · Konum tabanlı pazar istihbaratı</span><a href="/about.html">Hakkımızda</a></footer>
+    <footer class="site-footer"><span>© SerpMe</span><span>Location-based market intelligence</span><a href="/about.html">About</a></footer>
   </main>
   <template id="metric-template"><article class="metric"><p></p><strong></strong><small></small></article></template>
   <script src="supabase-config.js"></script>
