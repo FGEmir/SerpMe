@@ -90,12 +90,128 @@ function zoneStyle(zone, plan) {
   return `left:3%;top:3%;width:${Math.max(42, Math.min(63, percent + 9))}%;height:57%`;
 }
 
+let layoutEditor = null;
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+function initialEditorZones(plan) {
+  return plan.zones.map((zone, index) => [
+    {x: 4, y: 70, w: 25, h: 24}, {x: 31, y: 70, w: 28, h: 24},
+    {x: 4, y: 5, w: 61, h: 57}, {x: 70, y: 5, w: 25, h: 30}
+  ][index] && ({...zone, id: `zone-${index}`, ...[
+    {x: 4, y: 70, w: 25, h: 24}, {x: 31, y: 70, w: 28, h: 24},
+    {x: 4, y: 5, w: 61, h: 57}, {x: 70, y: 5, w: 25, h: 30}
+  ][index]}));
+}
+function activeFloor() { return layoutEditor.floors[layoutEditor.activeFloor]; }
+function setEditorStatus(message) { document.querySelector('#editor-status').textContent = message; }
+function editorItemStyle(item) { return `left:${item.x}%;top:${item.y}%;width:${item.w || 6}%;height:${item.h || 6}%;transform:rotate(${item.rotate || 0}deg);border-radius:${item.shape === 'circle' ? '50%' : item.shape === 'rounded' ? '12px' : '2px'}`; }
+function applyCapacityPenalty() {
+  const floor = activeFloor(), plan = layoutEditor.plan;
+  const penalty = floor.obstacles.length * 1.6 + floor.sinks.length * 1.4 + floor.walls.length * .7;
+  const peak = Math.max(1, Math.round(plan.peakGuests - penalty / plan.profile.sqmPerGuest));
+  const daily = Math.max(1, Math.round(plan.dailyGuests * peak / Math.max(plan.peakGuests, 1)));
+  document.querySelector('#peak-guests').textContent = `${peak} kişi`;
+  document.querySelector('#daily-guests').textContent = `${daily} kişi`;
+  document.querySelector('#guest-area').textContent = `${Math.max(0, integer(plan.guestArea - penalty))} m²`;
+  return {peak, daily, penalty};
+}
+function updateSelectedControls() {
+  const controls = document.querySelector('#selected-item-controls'), item = layoutEditor.selected;
+  controls.hidden = !item || item.kind === 'zone';
+  if (controls.hidden) return;
+  document.querySelector('#item-shape').value = item.shape || 'rectangle';
+  document.querySelector('#item-width').value = item.w || 6;
+  document.querySelector('#item-height').value = item.h || 6;
+  document.querySelector('#item-rotation').value = item.rotate || 0;
+  const sync = () => { item.shape = document.querySelector('#item-shape').value; item.w = Number(document.querySelector('#item-width').value); item.h = Number(document.querySelector('#item-height').value); item.rotate = Number(document.querySelector('#item-rotation').value); renderLayoutEditor(); setEditorStatus('Seçilen ögenin şekli ve boyutu güncellendi.'); };
+  ['#item-shape', '#item-width', '#item-height', '#item-rotation'].forEach(selector => { const control = document.querySelector(selector); control.oninput = sync; control.onchange = sync; });
+}
+function renderLayoutEditor() {
+  if (!layoutEditor) return;
+  const floor = activeFloor();
+  const tabs = document.querySelector('#floor-tabs');
+  tabs.innerHTML = layoutEditor.floors.map((item, index) => `<button type="button" data-floor="${index}" class="${index === layoutEditor.activeFloor ? 'is-active' : ''}">${text(item.name)}</button>`).join('');
+  tabs.querySelectorAll('button').forEach(button => button.onclick = () => { layoutEditor.activeFloor = Number(button.dataset.floor); layoutEditor.selected = null; renderLayoutEditor(); setEditorStatus(`${activeFloor().name} düzenleniyor.`); });
+  document.querySelectorAll('[data-tool]').forEach(button => {
+    button.classList.toggle('is-active', button.dataset.tool === layoutEditor.tool);
+    button.onclick = () => { layoutEditor.tool = button.dataset.tool; layoutEditor.selected = null; renderLayoutEditor(); setEditorStatus(layoutEditor.tool === 'select' ? 'Taşı: bir alanı, duvarı veya engeli sürükleyin.' : `${layoutEditor.tool === 'wall' ? 'Duvar' : 'Engel'} eklemek için planın boş alanına tıklayın.`); };
+  });
+  const canvas = document.querySelector('#editor-canvas');
+  canvas.innerHTML = [
+    ...floor.zones.map(zone => `<div class="editor-zone ${zone.className} ${layoutEditor.selected?.id === zone.id ? 'is-selected' : ''}" data-kind="zone" data-id="${zone.id}" style="left:${zone.x}%;top:${zone.y}%;width:${zone.w}%;height:${zone.h}%"><span><b>${text(zone.name)}</b>${integer(zone.area)} m²</span></div>`),
+    ...floor.walls.map(item => `<div class="editor-wall ${layoutEditor.selected?.id === item.id ? 'is-selected' : ''}" data-kind="wall" data-id="${item.id}" style="${editorItemStyle(item)}"></div>`),
+    ...floor.obstacles.map(item => `<div class="editor-obstacle ${layoutEditor.selected?.id === item.id ? 'is-selected' : ''}" data-kind="obstacle" data-id="${item.id}" style="${editorItemStyle(item)}"></div>`),
+    ...floor.doors.map(item => `<div class="editor-door ${layoutEditor.selected?.id === item.id ? 'is-selected' : ''}" data-kind="door" data-id="${item.id}" style="${editorItemStyle(item)}"></div>`),
+    ...floor.sinks.map(item => `<div class="editor-sink ${layoutEditor.selected?.id === item.id ? 'is-selected' : ''}" data-kind="sink" data-id="${item.id}" style="${editorItemStyle(item)}"></div>`)
+  ].join('');
+  updateSelectedControls();
+  let drag = null;
+  const getItem = (kind, id) => floor[`${kind}s`]?.find(item => item.id === id) || floor.zones.find(item => item.id === id);
+  canvas.onpointerdown = event => {
+    const itemElement = event.target.closest('[data-kind]');
+    const rect = canvas.getBoundingClientRect();
+    const point = {x: (event.clientX - rect.left) / rect.width * 100, y: (event.clientY - rect.top) / rect.height * 100};
+    if (!itemElement && layoutEditor.tool !== 'select') {
+      const kind = layoutEditor.tool;
+      const defaults = {wall: {w: 24, h: 3, shape: 'rectangle'}, obstacle: {w: 7, h: 9, shape: 'rounded'}, door: {w: 13, h: 4, shape: 'rounded'}, sink: {w: 6, h: 7, shape: 'circle'}}[kind];
+      const item = {id: `${kind}-${Date.now()}`, x: clamp(point.x - defaults.w / 2, 0, 100 - defaults.w), y: clamp(point.y - defaults.h / 2, 0, 100 - defaults.h), rotate: 0, ...defaults};
+      item.kind = kind; floor[`${kind}s`].push(item); layoutEditor.selected = item; renderLayoutEditor(); setEditorStatus(`${kind === 'wall' ? 'Duvar' : kind === 'door' ? 'Kapı' : kind === 'sink' ? 'Lavabo' : 'Engel'} eklendi; Taşı aracına geçerek konumunu değiştirebilirsiniz.`); return;
+    }
+    if (!itemElement) return;
+    const kind = itemElement.dataset.kind, item = getItem(kind, itemElement.dataset.id);
+    item.kind = kind; layoutEditor.selected = item;
+    if (layoutEditor.tool !== 'select') { renderLayoutEditor(); return; }
+    drag = {item, element: itemElement, kind, dx: point.x - item.x, dy: point.y - item.y};
+    canvas.setPointerCapture(event.pointerId);
+  };
+  canvas.onpointermove = event => {
+    if (!drag) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width * 100, y = (event.clientY - rect.top) / rect.height * 100;
+    const maxX = drag.kind === 'zone' ? 100 - drag.item.w : drag.kind === 'wall' ? 100 - drag.item.w : 95;
+    const maxY = drag.kind === 'zone' ? 100 - drag.item.h : 95;
+    drag.item.x = clamp(x - drag.dx, 0, maxX); drag.item.y = clamp(y - drag.dy, 0, maxY);
+    drag.element.style.left = `${drag.item.x}%`; drag.element.style.top = `${drag.item.y}%`;
+  };
+  canvas.onpointerup = event => { if (drag) { canvas.releasePointerCapture(event.pointerId); drag = null; setEditorStatus('Konum güncellendi. Başka bir kat seçebilir veya engel ekleyebilirsiniz.'); } };
+  document.querySelector('#delete-layout-item').onclick = () => {
+    const selected = layoutEditor.selected; if (!selected || selected.kind === 'zone') { setEditorStatus('Silmek için önce eklediğiniz bir duvar veya engeli seçin.'); return; }
+    floor[`${selected.kind}s`] = floor[`${selected.kind}s`].filter(item => item.id !== selected.id); layoutEditor.selected = null; renderLayoutEditor(); setEditorStatus('Seçilen öge silindi.');
+  };
+  document.querySelector('#add-floor').onclick = () => {
+    const next = layoutEditor.floors.length + 1;
+    layoutEditor.floors.push({name: `Kat ${next}`, zones: initialEditorZones(layoutEditor.plan), walls: [], obstacles: [], doors: [], sinks: []});
+    layoutEditor.activeFloor = next - 1; layoutEditor.selected = null; renderLayoutEditor(); setEditorStatus(`Kat ${next} eklendi. Her kat bağımsız düzenlenebilir.`);
+  };
+  document.querySelector('#optimize-layout').onclick = () => {
+    const barriers = [...floor.walls, ...floor.obstacles, ...floor.sinks];
+    floor.zones.forEach(zone => barriers.forEach(item => {
+      const overlap = zone.x < item.x + item.w && zone.x + zone.w > item.x && zone.y < item.y + item.h && zone.y + zone.h > item.y;
+      if (overlap) zone.y = clamp(item.y + item.h + 3, 0, 100 - zone.h);
+    }));
+    const capacity = applyCapacityPenalty(); renderLayoutEditor(); setEditorStatus(`Engeller dikkate alınarak yerleşim güncellendi. Aktif kat için tahmini kapasite ${capacity.peak} kişi.`);
+  };
+  document.querySelector('#approve-layout').onclick = () => {
+    const capacity = applyCapacityPenalty(), vision = document.querySelector('#concept-vision');
+    vision.hidden = false;
+    const materialSet = layoutEditor.plan.profile === modelProfiles.retail ? ['Modüler raf sistemi', 'Dayanıklı vinil zemin', 'Vitrin aydınlatması'] : layoutEditor.plan.profile === modelProfiles.studio ? ['Akustik yüzeyler', 'Hijyenik ıslak hacim', 'Esnek bölme sistemi'] : ['Sıcak ahşap', 'Mat mineral sıva', 'Katmanlı atmosfer aydınlatması'];
+    document.querySelector('#vision-title').textContent = `${layoutEditor.plan.concept} · iç mimari yönü`;
+    document.querySelector('#vision-summary').textContent = `${activeFloor().name} için plan onaylandı. ${activeFloor().doors.length} kapı, ${activeFloor().sinks.length} lavabo ve ${activeFloor().walls.length + activeFloor().obstacles.length} fiziksel engel dikkate alınarak tahmini ${capacity.peak} eş zamanlı kişi kapasitesiyle tasarım yönü oluşturuldu.`;
+    document.querySelector('#vision-materials').innerHTML = materialSet.map(item => `<span>${text(item)}</span>`).join('');
+    vision.scrollIntoView({behavior: 'smooth', block: 'start'}); setEditorStatus('Plan onaylandı; konsept görseli ve iç mimari yönü aşağıda hazır.');
+  };
+}
+function initializeLayoutEditor(plan) {
+  layoutEditor = {plan, activeFloor: 0, tool: 'select', selected: null, floors: [{name: 'Kat 1', zones: initialEditorZones(plan), walls: [], obstacles: [], doors: [], sinks: []}]};
+  renderLayoutEditor();
+}
+
 function renderPlan(plan) {
   document.querySelector('.studio-empty').hidden = true;
   document.querySelector('#studio-result').hidden = false;
   document.querySelector('#layout-title').textContent = `${plan.concept} · ${plan.profile.label}`;
   document.querySelector('#layout-badge').textContent = `${integer(plan.area)} m² · ${plan.frontage.toFixed(1)} m cephe`;
   document.querySelector('#layout-plan').innerHTML = `<div class="floor-shell" style="aspect-ratio:${Math.max(.7, Math.min(2.5, plan.frontage / plan.depth))}">${plan.zones.map(zone => `<div class="zone ${zone.className}" style="${zoneStyle(zone, plan)}"><span><b>${text(zone.name)}</b>${integer(zone.area)} m²</span></div>`).join('')}</div>`;
+  initializeLayoutEditor(plan);
   document.querySelector('#peak-guests').textContent = `${plan.peakGuests} kişi`;
   document.querySelector('#daily-guests').textContent = `${plan.dailyGuests} kişi`;
   const capacityCopy = plan.conceptId === 'accommodation' ? ['Günlük konaklayan', 'doluluk varsayımıyla']

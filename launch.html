@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="smooth.css" />
   <link rel="stylesheet" href="launch.css" />
   <link rel="stylesheet" href="catalog.css" />
+  <link rel="stylesheet" href="editor.css" />
+  <link rel="stylesheet" href="vision.css" />
 </head>
 <body>
   <main class="site-page launch-page">
@@ -36,6 +38,15 @@
         <div id="studio-result" hidden>
           <div class="studio-title"><div><p class="eyebrow">ÖNERİLEN YERLEŞİM</p><h2 id="layout-title">—</h2></div><span id="layout-badge">—</span></div>
           <div id="layout-plan" class="layout-plan" role="img" aria-label="Önerilen mekân yerleşimi"></div>
+          <section class="layout-editor" aria-label="Yerleşim planı düzenleyicisi">
+            <div class="editor-header"><div><p class="eyebrow">DÜZENLENEBİLİR PLAN</p><h3>Plan üzerinde çalışın</h3></div><span>Ögeleri sürükleyin; araç seçip plana tıklayarak engel ekleyin.</span></div>
+            <div class="editor-toolbar" role="toolbar" aria-label="Plan araçları"><button type="button" data-tool="select" class="is-active">Taşı</button><button type="button" data-tool="wall">Duvar ekle</button><button type="button" data-tool="obstacle">Engel ekle</button><button type="button" data-tool="door">Kapı ekle</button><button type="button" data-tool="sink">Lavabo ekle</button><button type="button" id="delete-layout-item">Seçileni sil</button><button type="button" id="add-floor">Kat ekle</button><button type="button" id="optimize-layout">Engellere göre optimize et</button><button type="button" id="approve-layout">Planı onayla</button></div>
+            <div id="floor-tabs" class="floor-tabs" aria-label="Katlar"></div>
+            <div id="editor-canvas" class="editor-canvas" aria-label="Düzenlenebilir kat planı"></div>
+            <div id="selected-item-controls" class="selected-item-controls" hidden><label>Şekil<select id="item-shape"><option value="rectangle">Dikdörtgen</option><option value="rounded">Yuvarlatılmış</option><option value="circle">Daire</option></select></label><label>Genişlik<input id="item-width" type="range" min="4" max="70" value="20" /></label><label>Yükseklik<input id="item-height" type="range" min="4" max="70" value="20" /></label><label>Döndürme<input id="item-rotation" type="range" min="0" max="180" value="0" /></label></div>
+            <p id="editor-status" class="editor-status">Taşı aracını kullanarak alanları yeniden konumlandırabilirsiniz.</p>
+          </section>
+          <section id="concept-vision" class="concept-vision" hidden><div><p class="eyebrow">ONAYLANAN PLAN · KONSEPT GÖRSELİ</p><h3 id="vision-title">İç mimari yönü</h3><p id="vision-summary"></p><div id="vision-materials" class="vision-materials"></div></div><figure><img src="concept-cafe-interior.png" alt="Örnek üçüncü nesil kahve mekânı iç mimari konsept fotoğrafı" /><figcaption>Örnek iç mimari renderi; onaylanan planın malzeme ve atmosfer yönünü anlatır.</figcaption></figure></section>
           <div class="capacity-grid"><article><p>Eş zamanlı konuk</p><strong id="peak-guests">—</strong><small>operasyonel tahmin</small></article><article><p id="daily-capacity-label">Günlük ağırlama</p><strong id="daily-guests">—</strong><small id="daily-capacity-note">servis turu ile</small></article><article><p>Konuk alanı</p><strong id="guest-area">—</strong><small>net kullanım alanı</small></article><article><p>Alan verimliliği</p><strong id="layout-efficiency">—</strong><small>oturma / satış alanı</small></article></div>
           <div class="layout-explanation"><h3>Optimizasyon mantığı</h3><p id="layout-summary"></p><ul id="layout-actions"></ul></div>
         </div>
@@ -43,6 +54,6 @@
     </section>
     <footer class="site-footer"><span>© 2026 Fzl Studio</span><span>SerpMe · Konum tabanlı pazar istihbaratı</span><a href="/about.html">Hakkımızda</a></footer>
   </main>
-  <script src="supabase-config.js"></script><script src="auth.js"></script><script src="catalog.js?v=20260829-catalog"></script><script src="launch.js?v=20260829-operation-model"></script>
+  <script src="supabase-config.js"></script><script src="auth.js"></script><script src="catalog.js?v=20260829-catalog"></script><script src="launch.js?v=20260829-layout-controls-v2"></script>
 </body>
 </html>
