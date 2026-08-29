@@ -42,8 +42,8 @@ async function signOut() {
   setSession(null);
 }
 function updateNav(user) {
-  document.querySelectorAll('[data-auth-link]').forEach(link => { link.textContent = user ? 'Portföyüm' : 'Giriş'; link.href = user ? '/portfolio.html' : '/login.html'; });
-  document.querySelectorAll('[data-logout]').forEach(button => { button.hidden = !user; button.onclick = async () => { button.disabled = true; await signOut(); window.location.href = '/'; }; });
+  document.querySelectorAll('[data-auth-link]').forEach(link => { link.textContent = user ? 'My Portfolio' : 'Log in'; link.href = user ? '/portfolio.html' : '/login.html'; });
+  document.querySelectorAll('[data-logout]').forEach(button => { button.textContent = 'Log out'; button.hidden = !user; button.onclick = async () => { button.disabled = true; await signOut(); window.location.href = '/'; }; });
 }
 window.SerpMeAuth = { getSession, setSession, supabaseFetch, currentUser, captureAuthRedirect, signOut, updateNav };
 document.addEventListener('DOMContentLoaded', async () => updateNav(await captureAuthRedirect() || await currentUser()));

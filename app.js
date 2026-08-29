@@ -225,6 +225,60 @@ form.addEventListener('submit', async (event) => {
   catch(err){status.textContent=err.message;status.classList.remove('success')} finally {button.disabled=false;button.innerHTML='Pazarı analiz et <span>→</span>'}
 });
 document.querySelector('#export-button').addEventListener('click',()=>window.print());
+function demandNumber(id) {
+  const raw = document.querySelector(id).value.trim();
+  if (raw === '') return null;
+  const value = Number(raw);
+  return Number.isFinite(value) && value >= 0 ? value : null;
+}
+function collectDemandValidation() {
+  const searchIndex = demandNumber('#demand-search-index');
+  const commitments = demandNumber('#demand-commitments');
+  const commitmentTarget = demandNumber('#demand-commitment-target');
+  const morning = demandNumber('#demand-footfall-morning');
+  const lunch = demandNumber('#demand-footfall-lunch');
+  const evening = demandNumber('#demand-footfall-evening');
+  const footfallTarget = demandNumber('#demand-footfall-target');
+  const footfallTotal = [morning, lunch, evening].every(value => value !== null) ? morning + lunch + evening : null;
+  const complete = searchIndex !== null && commitments !== null && commitmentTarget > 0 && footfallTotal !== null && footfallTarget > 0;
+  const definition = {
+    target_customer: document.querySelector('#demand-customer').value.trim(),
+    need_to_solve: document.querySelector('#demand-need').value.trim(),
+    price_range_try: demandNumber('#demand-price'),
+    sales_model: document.querySelector('#demand-model').value,
+  };
+  const evidence = {
+    search_intent: { relative_index: searchIndex, comparison_period: document.querySelector('#demand-period').value, source: 'user_entered_google_trends_comparison' },
+    paid_commitment: { actual: commitments, target: commitmentTarget },
+    observed_footfall: { morning_15_min: morning, lunch_15_min: lunch, evening_15_min: evening, total: footfallTotal, threshold: footfallTarget },
+  };
+  if (!complete) return { definition, evidence, completeness: 'incomplete', score: null, decision: 'Evidence incomplete', note: 'Collect all three evidence types before using a validation score.' };
+  const score = Math.round(searchIndex * .25 + Math.min(1, commitments / commitmentTarget) * 45 + Math.min(1, footfallTotal / footfallTarget) * 30);
+  const decision = score >= 70 ? 'Validate for a limited launch' : score >= 45 ? 'Iterate and re-test' : 'Stop or redefine';
+  const note = score >= 70 ? 'Evidence meets the pre-set thresholds. Keep the launch limited and track repeat purchase.' : score >= 45 ? 'Some evidence is present, but one or more thresholds need another test cycle.' : 'Current measured evidence does not support moving to an investment decision.';
+  return { definition, evidence, completeness: 'complete', score, decision, note };
+}
+function renderDemandValidation() {
+  const validation = collectDemandValidation();
+  const status = document.querySelector('#demand-status');
+  const result = document.querySelector('#demand-result');
+  if (activeReport) activeReport.demandValidation = validation;
+  if (validation.completeness !== 'complete') {
+    result.hidden = true;
+    status.textContent = validation.note;
+    status.classList.remove('success');
+    return validation;
+  }
+  document.querySelector('#demand-score').textContent = validation.score;
+  document.querySelector('#demand-decision').textContent = validation.decision;
+  document.querySelector('#demand-decision-note').textContent = validation.note;
+  document.querySelector('#demand-footfall-total').textContent = validation.evidence.observed_footfall.total;
+  result.hidden = false;
+  status.textContent = 'Validation evidence calculated from your measured inputs.';
+  status.classList.add('success');
+  return validation;
+}
+document.querySelector('#calculate-demand').addEventListener('click', renderDemandValidation);
 document.querySelector('#save-report-button').addEventListener('click', async () => {
   const saveStatus = document.querySelector('#save-status');
   const user = await SerpMeAuth.currentUser();
@@ -233,10 +287,11 @@ document.querySelector('#save-report-button').addEventListener('click', async ()
   const title = document.querySelector('#feasibility-title').value.trim() || `${activeReport.location} ${activeReport.business}`;
   const stage = document.querySelector('#feasibility-stage').value;
   const notes = document.querySelector('#feasibility-notes').value.trim();
+  const demandValidation = activeReport.demandValidation || collectDemandValidation();
   try {
     saveStatus.textContent = 'Portföye kaydediliyor…';
     const idea = await SerpMeAuth.supabaseFetch('/rest/v1/ideas', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ owner_id: user.id, title, concept: activeReport.business, location: activeReport.location, stage, notes }) });
-    await SerpMeAuth.supabaseFetch('/rest/v1/reports', { method: 'POST', body: JSON.stringify({ owner_id: user.id, idea_id: idea[0].id, business: activeReport.business, location: activeReport.location, opportunity_score: activeReport.score, market_viability_score: activeReport.score, analysis_mode: activeReport.analysis.mode, viability_classification: activeReport.analysis.classification, data_confidence: activeReport.analysis.confidence, viability_components: activeReport.analysis.components, density: activeReport.density, average_rating: activeReport.averageRating || null, total_reviews: activeReport.reviewTotal, feasibility: { title, stage, notes }, report_payload: { places: activeReport.places, finance: activeReport.finance, market_analysis: activeReport.analysis, proxy_results: activeReport.proxyResults, direct_by_radius: activeReport.directByRadius } }) });
+    await SerpMeAuth.supabaseFetch('/rest/v1/reports', { method: 'POST', body: JSON.stringify({ owner_id: user.id, idea_id: idea[0].id, business: activeReport.business, location: activeReport.location, opportunity_score: activeReport.score, market_viability_score: activeReport.score, analysis_mode: activeReport.analysis.mode, viability_classification: activeReport.analysis.classification, data_confidence: activeReport.analysis.confidence, viability_components: activeReport.analysis.components, density: activeReport.density, average_rating: activeReport.averageRating || null, total_reviews: activeReport.reviewTotal, feasibility: { title, stage, notes, demand_validation: demandValidation }, report_payload: { places: activeReport.places, finance: activeReport.finance, market_analysis: activeReport.analysis, proxy_results: activeReport.proxyResults, direct_by_radius: activeReport.directByRadius, demand_validation: demandValidation } }) });
     saveStatus.textContent = 'Analiz ve fizibilite notu portföyünüze kaydedildi.'; saveStatus.classList.add('success');
   } catch (error) { saveStatus.textContent = error.message; saveStatus.classList.remove('success'); }
 });

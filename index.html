@@ -15,7 +15,7 @@
     <section class="hero">
       <nav class="top-nav" aria-label="Main navigation">
         <a class="brand" href="/" aria-label="SerpMe home"><span class="logo" aria-hidden="true"><i></i><i></i><i></i></span><span>Serp<span class="brand-accent">Me</span></span><small>MARKET INTELLIGENCE</small></a>
-        <div class="nav-links"><a href="/launch.html">Concept Studio</a><a href="/about.html">About</a><a class="nav-cta" data-auth-link href="/login.html">Sign in</a></div>
+        <div class="nav-links"><a href="/launch.html">Concept Studio</a><a href="/about.html">About</a><a class="nav-cta" data-auth-link href="/login.html">Log in</a></div>
       </nav>
       <div class="hero-copy">
         <p class="eyebrow">SERPAPI × GOOGLE MAPS · MARKET SIGNALS</p>
@@ -111,6 +111,17 @@
         <ol id="plan-actions" class="plan-actions"></ol>
         <p class="disclaimer">Financial results are derived from user inputs; tax, capital expenditure, financing cost, and depreciation are excluded.</p>
       </section>
+      <section class="demand-lab" aria-labelledby="demand-lab-title">
+        <div class="section-heading"><div><p class="eyebrow">DEMAND VALIDATION LAB</p><h3 id="demand-lab-title">Measure evidence before investing</h3></div><p>Search intent, paid commitments, and observed footfall are kept as separate evidence. Missing evidence is never estimated.</p></div>
+        <div class="demand-grid">
+          <div class="demand-panel"><p class="eyebrow">IDEA DEFINITION</p><div class="demand-fields"><label>Target customer<input id="demand-customer" maxlength="120" placeholder="e.g. nearby university students" /></label><label>Need to solve<input id="demand-need" maxlength="160" placeholder="e.g. affordable weekday lunch" /></label><label>Price range (₺)<input id="demand-price" type="number" min="0" placeholder="e.g. 220" /></label><label>Sales model<select id="demand-model"><option value="walk-in">Walk-in</option><option value="delivery">Delivery</option><option value="booking">Booking / appointment</option><option value="hybrid">Hybrid</option></select></label></div></div>
+          <div class="demand-panel"><p class="eyebrow">SEARCH INTENT</p><div class="demand-fields"><label>Relative search-intent index (0–100)<input id="demand-search-index" type="number" min="0" max="100" placeholder="Enter a Google Trends comparison index" /></label><label>Comparison period<select id="demand-period"><option value="last-90-days">Last 90 days</option><option value="last-12-months">Last 12 months</option><option value="seasonal">Seasonal comparison</option></select></label></div><p class="field-note">Use a consistent topic/keyword and geography. This is relative interest, not sales volume.</p></div>
+          <div class="demand-panel"><p class="eyebrow">PAID COMMITMENT</p><div class="demand-fields"><label>Paid pre-orders / bookings<input id="demand-commitments" type="number" min="0" placeholder="0" /></label><label>Commitment target<input id="demand-commitment-target" type="number" min="1" placeholder="e.g. 15" /></label></div><p class="field-note">Record only paid pre-orders, deposits, bookings, or sample sales — not likes or clicks.</p></div>
+          <div class="demand-panel"><p class="eyebrow">OBSERVED FOOTFALL</p><div class="demand-fields"><label>Morning count · 15 min<input id="demand-footfall-morning" type="number" min="0" placeholder="0" /></label><label>Lunch count · 15 min<input id="demand-footfall-lunch" type="number" min="0" placeholder="0" /></label><label>Evening count · 15 min<input id="demand-footfall-evening" type="number" min="0" placeholder="0" /></label><label>Minimum total threshold<input id="demand-footfall-target" type="number" min="1" placeholder="e.g. 60" /></label></div></div>
+        </div>
+        <div class="demand-actions"><button id="calculate-demand" type="button">Calculate validation evidence <span>→</span></button><p id="demand-status" class="form-status" role="status">Enter measured evidence to calculate a validation result.</p></div>
+        <div id="demand-result" class="demand-result" hidden><article><p>Evidence score</p><strong id="demand-score">—</strong><small>/100 · only when all three evidence types are present</small></article><article><p>Decision</p><strong id="demand-decision">—</strong><small id="demand-decision-note"></small></article><article><p>Observed footfall</p><strong id="demand-footfall-total">—</strong><small>total across three 15-minute counts</small></article></div>
+      </section>
       <section class="feasibility-section">
         <div><p class="eyebrow">FEASIBILITY STEP</p><h3>Move the idea toward an investment decision</h3><p>Save this analysis to your portfolio with risks, validation priorities, and the first action.</p></div>
         <div class="feasibility-grid">
@@ -131,6 +142,6 @@
   <template id="metric-template"><article class="metric"><p></p><strong></strong><small></small></article></template>
   <script src="supabase-config.js"></script>
   <script src="auth.js"></script>
-  <script src="app.js?v=20260829-main"></script>
+  <script src="app.js?v=20260829-demand-lab-v1"></script>
 </body>
 </html>

@@ -1,5 +1,30 @@
 # SerpMe Sistem Mimarisi
 
+Bu doküman, SerpMe'nin üretimdeki web uygulaması, canlı pazar analizi, kullanıcı hesabı, portföy, talep doğrulama ve Concept Studio bileşenleri için kaynak mimari tanımıdır. Metriklerin kaynağı ve sınırı açıkça belirtilir; desteklenmeyen veri tahmin edilmez.
+
+## Sistem özeti
+
+```mermaid
+flowchart TB
+  B[Tarayıcı\nSerpMe web arayüzü] --> R[Render Web Service\nPython app.py]
+  R -->|GET /api/search| M[Market analysis orchestration]
+  M -->|Sunucu tarafı gizli anahtar| S[SerpAPI\nGoogle Maps engine]
+  S --> M
+  M --> B
+  B -->|Auth + kullanıcıya ait kayıtlar| SB[Supabase\nAuth + PostgREST + RLS]
+  SB --> B
+  H[Hostinger DNS\nserpme.online] --> R
+  R -->|GET /healthz| MON[Render health monitoring]
+```
+
+### Sorumluluk sınırları
+
+- **Tarayıcı:** Formlar, rapor görünümü, hesap oturumu, Concept Studio, ücretsiz Canvas 3D görünümü ve kullanıcı tarafından girilen talep kanıtları. SerpAPI anahtarına erişemez.
+- **Render uygulaması:** Statik varlıkların güvenli sunumu, `/api/search` istek doğrulaması, SerpAPI proxy'si, önbellek, hız limiti ve analiz hesaplama.
+- **SerpAPI / Google Maps:** Görünür yerel işletme sonuçları. Nüfus, kira, gerçek yaya trafiği veya satış verisi sağlamaz.
+- **Supabase:** E-posta tabanlı kimlik doğrulama, kullanıcıya ait fikir ve rapor kayıtları. Satır düzeyi güvenlik ile her kullanıcı yalnızca kendi verisini görür.
+- **Hostinger ve Render:** Hostinger yalnızca DNS çözümleme, Render ise HTTPS sertifikası ve uygulama barındırma sağlar.
+
 ```mermaid
 flowchart LR
   U[Web arayüzü] --> V[İstek doğrulama]
@@ -71,3 +96,57 @@ Plan onaylandığında tarayıcıdaki Canvas katmanı, aktif katın yüzde taban
 - **Fırsat skoru:** Talep ve kalite boşluğunu artırır; aşırı rekabeti düşürür.
 - **Başa baş işlem/adet:** `(kira + sabit gider) / (ortalama sepet × brüt marj)`; aylık sonuç 30 güne bölünür.
 - **İşletme sermayesi:** Üç aylık sabit gider tamponu. Vergi, yatırım harcaması, kredi ve amortisman bu MVP’de ayrı ele alınmalıdır.
+
+## Canlı pazar analizi akışı
+
+1. Kullanıcı işletme tipi, mikro-konum, yarıçap ve en fazla üç karşılaştırma konsepti gönderir.
+2. Render, giriş boyutlarını ve yarıçapı sınırlar; istemci/IP ve sağlayıcı çağrı bütçesini denetler.
+3. Sunucu doğrudan işletme sorgusunu 500 m, 1 km, 2 km, 3 km ve 5 km mantığında genişletir. Ticari aktivite, hedef müşteri varlığı, erişilebilirlik ve dolaylı talep için ayrı proxy sorguları çalıştırır.
+4. Sonuçlar kimlik bilgisine göre birleştirilir; doğrudan rakip sayısı 0–2 ise `demand_validation`, 3–10 ise `early_market`, 10+ ise `competition` modu seçilir.
+5. Market Viability Score şu sabit ağırlıkları kullanır: talep %30, ticari aktivite %20, hedef müşteri varlığı %15, erişilebilirlik %10, rekabet boşluğu %10, komşu pazar sinyali %10, konum uyumu %5.
+6. Rapor, skorla birlikte veri güveni, alt skorlar, veri sınırları ve aksiyon önerilerini döndürür. Sağlayıcı erişilemezse sonuç `demo` olarak işaretlenir; canlı veri gibi gösterilmez.
+
+## Talep doğrulama mimarisi
+
+Talep doğrulama, Google Maps'teki arz/rakip verisinden bağımsızdır. Kullanıcı ölçüm girmeden gerçek talep varmış gibi yorum yapılmaz.
+
+### Ortak fikir şeması
+
+Her fikir; hedef müşteri, çözülecek ihtiyaç, fiyat aralığı, satış modeli, konum ve fizibilite aşaması ile tanımlanır. Bu zorunlu tanım, farklı fikirlerin aynı değerlendirme dilinde karşılaştırılmasını sağlar.
+
+### Kanıt katmanları
+
+1. **Arama niyeti:** Kullanıcının aynı konu/anahtar kelime ve coğrafya ile aldığı 0–100 göreli arama ilgisi. Bu satış hacmi değildir.
+2. **Ücretli taahhüt:** Yalnızca ücretli ön sipariş, depozito, rezervasyon veya örnek satış sayısı ve önceden belirlenmiş hedefi.
+3. **Gözlenen davranış:** Sabah, öğle ve akşam için 15 dakikalık saha yaya sayımları ile minimum toplam eşik.
+
+Üç kanıt türünün tamamı yoksa skor oluşturulmaz ve durum `Evidence incomplete` kalır. Tam veri olduğunda skor formülü şudur:
+
+`0.25 × arama niyeti + 0.45 × min(ücretli taahhüt/hedef, 1) × 100 + 0.30 × min(yaya toplamı/eşik, 1) × 100`
+
+Skor >=70 ise sınırlı lansman doğrulaması, 45–69 ise tekrar test, <45 ise fikri yeniden tanımlama önerilir. Bu karar yatırım tavsiyesi değildir; ham ölçümler rapora kaydedilir.
+
+## Kimlik doğrulama ve portföy akışı
+
+1. Kullanıcı `Log in` ile Supabase Auth'a gider veya e-posta onaylı hesap oluşturur.
+2. Oturum yalnızca tarayıcıda saklanır; isteklerde kullanıcının erişim belirteci Supabase'e taşınır.
+3. Kullanıcı bir raporu kaydettiğinde önce `ideas`, sonra buna bağlı `reports` kaydı oluşturulur.
+4. Rapor kaydında pazar analizi, finansal varsayımlar, doğrudan/proxy sonuçlar, fizibilite notu ve talep doğrulama ham verisi `report_payload` içinde saklanır.
+5. Supabase RLS politikaları, kayıtları `owner_id` üzerinden oturumdaki kullanıcıyla sınırlar. Çıkışta uzak Supabase oturumu sonlandırılır ve yerel oturum silinir.
+
+## Güvenlik, güvenilirlik ve operasyon
+
+- `SERPAPI_KEY` yalnızca Render ortam değişkenidir veya yerelde `.env` dosyasında tutulur; Git'e, tarayıcı koduna veya Supabase'e yazılmaz.
+- Sunucu yalnızca izinli statik dosyaları sunar; `.env`, git verisi ve diğer çalışma dosyaları istekle okunamaz.
+- CSP, `X-Content-Type-Options`, `X-Frame-Options`, referrer policy, HSTS ve permissions policy başlıkları uygulanır.
+- SerpAPI çağrıları istek hızı, saatlik sağlayıcı bütçesi ve kısa süreli yanıt önbelleği ile maliyet/istismar riskine karşı sınırlandırılır.
+- Tarayıcıda gösterilen kullanıcı kaynaklı portföy verileri HTML kaçışlamasıyla işlenir.
+- Docker imajı gerekli tüm varlıkları içerir; `.env` ve `.git` `.dockerignore` ile imaj dışında kalır.
+- Dağıtım zinciri: yerel commit → GitHub `main` → Render otomatik deploy → `/healthz` kontrolü → özel alan adı üzerinden HTTPS.
+
+## Bilinen sınırlar ve sonraki adımlar
+
+- Google Maps sonuçları görünür listeyle sınırlıdır; gerçek nüfus, kira, ciro, satış dönüşümü ve tam yaya trafiği ölçülmez.
+- Talep doğrulama verileri kullanıcı tarafından ölçülür; kaynak, tarih ve eşiklerin ileride kayıt arayüzünde zorunlu hale getirilmesi önerilir.
+- Concept Studio ön tasarım aracıdır; yangın, statik, havalandırma, erişilebilirlik ve ruhsat için yetkili profesyonel onayı gerekir.
+- Gelecek sürümde rapor sürümleme, konservatif/baz/iyimser finansal senaryolar, sınırlı lansman deneyi kaydı ve paylaşılabilir salt-okunur rapor bağlantıları eklenmelidir.
