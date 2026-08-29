@@ -8,21 +8,25 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Lock
 from urllib.parse import urlencode
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 
 ROOT = Path(__file__).parent
-PUBLIC_FILES = {"/", "/index.html", "/styles.css", "/liquid.css", "/viability.css", "/smooth.css", "/catalog.css", "/editor.css", "/vision.css", "/catalog.js", "/app.js", "/auth.js", "/login.js", "/portfolio.js", "/launch.js", "/launch.css", "/concept-cafe-interior.png", "/supabase-config.js", "/about.html", "/login.html", "/portfolio.html", "/launch.html"}
+PUBLIC_FILES = {"/", "/index.html", "/styles.css", "/liquid.css", "/viability.css", "/smooth.css", "/catalog.css", "/editor.css", "/vision.css", "/vision-controls.css", "/concept-3d.css", "/catalog.js", "/app.js", "/auth.js", "/login.js", "/portfolio.js", "/launch.js", "/launch.css", "/concept-cafe-interior.png", "/supabase-config.js", "/about.html", "/login.html", "/portfolio.html", "/launch.html"}
 REQUEST_WINDOW_SECONDS = 60
 MAX_SEARCHES_PER_WINDOW = 3
 PROVIDER_WINDOW_SECONDS = 3600
 MAX_PROVIDER_CALLS_PER_WINDOW = int(os.environ.get("MAX_SERPAPI_CALLS_PER_HOUR", "30"))
+RENDER_WINDOW_SECONDS = 3600
+MAX_RENDERS_PER_WINDOW = int(os.environ.get("MAX_CONCEPT_RENDERS_PER_HOUR", "12"))
+MAX_RENDERS_PER_CLIENT = int(os.environ.get("MAX_CONCEPT_RENDERS_PER_CLIENT_HOUR", "2"))
 CACHE_SECONDS = 300
 MAX_CACHE_ENTRIES = 128
 REQUEST_LOG = defaultdict(deque)
 RESPONSE_CACHE = {}
 CACHE_LOCK = Lock()
 PROVIDER_CALL_LOG = deque()
+RENDER_CALL_LOG = defaultdict(deque)
 RADIUS_LADDER = (500, 1000, 2000, 3000, 5000)
 PROXY_GROUPS = {
     "commercial_activity": "restoran OR fast food OR alışveriş merkezi OR mağaza OR market",
@@ -203,6 +207,71 @@ class AppHandler(SimpleHTTPRequestHandler):
         self.path = "/index.html" if path == "/" else path
         return super().do_GET()
 
+    def do_POST(self):
+        from urllib.parse import urlparse
+        if urlparse(self.path).path == "/api/concept-render":
+            return self.concept_render()
+        return self.send_json({"error": "Kaynak bulunamadı."}, 404)
+
+    def concept_render(self):
+        """Create a paid concept render only when explicitly enabled server-side."""
+        if os.environ.get("CONCEPT_RENDER_ENABLED", "").lower() != "true":
+            return self.send_json({"error": "Fotogerçekçi üretim henüz etkin değil.", "code": "render_disabled"}, 503)
+        api_key = os.environ.get("OPENAI_API_KEY")
+        if not api_key:
+            return self.send_json({"error": "Görsel üretim yapılandırması eksik.", "code": "render_unavailable"}, 503)
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            length = 0
+        if not 0 < length <= 20_000:
+            return self.send_json({"error": "Geçersiz plan isteği."}, 400)
+        try:
+            payload = json.loads(self.rfile.read(length).decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return self.send_json({"error": "Plan verisi okunamadı."}, 400)
+        brief = self.render_brief(payload)
+        if not brief:
+            return self.send_json({"error": "Plan verisi eksik veya geçersiz."}, 400)
+        if not self.render_budget_ok():
+            return self.send_json({"error": "Görsel üretim kotası doldu. Lütfen daha sonra tekrar deneyin."}, 429)
+        try:
+            request_body = json.dumps({"model": os.environ.get("OPENAI_IMAGE_MODEL", "gpt-image-2"), "size": "1536x1024", "quality": "low", "output_format": "png", "n": 1, "prompt": brief}).encode("utf-8")
+            request = Request("https://api.openai.com/v1/images/generations", data=request_body, headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}, method="POST")
+            with urlopen(request, timeout=80) as response:
+                generated = json.load(response)
+            image = (generated.get("data") or [{}])[0].get("b64_json")
+            if not image:
+                raise ValueError("Provider did not return an image")
+            return self.send_json({"image_url": f"data:image/png;base64,{image}", "signature": payload.get("signature", "")})
+        except Exception:
+            # Never expose provider responses, credentials or implementation details.
+            return self.send_json({"error": "Görsel şu anda üretilemedi; plan önizlemesi kullanılabilir."}, 502)
+
+    @staticmethod
+    def render_brief(payload):
+        """Translate bounded, structured plan data into a provider prompt."""
+        plan = payload.get("plan") if isinstance(payload, dict) else None
+        floors = payload.get("floors") if isinstance(payload, dict) else None
+        if not isinstance(plan, dict) or not isinstance(floors, list) or not 1 <= len(floors) <= 8:
+            return None
+        concept, model = str(plan.get("concept", "")).strip()[:80], str(plan.get("model", "")).strip()[:30]
+        if not concept or model not in {"cafe", "restaurant", "retail", "studio"}:
+            return None
+        try:
+            area = max(20, min(2000, float(plan.get("area"))))
+        except (TypeError, ValueError):
+            return None
+        active = payload.get("active_floor", 0)
+        if not isinstance(active, int) or not 0 <= active < len(floors):
+            return None
+        floor = floors[active] if isinstance(floors[active], dict) else {}
+        counts = {kind: len(floor.get(kind, [])) if isinstance(floor.get(kind, []), list) else 0 for kind in ("walls", "obstacles", "doors", "sinks", "zones")}
+        if any(value > 40 for value in counts.values()):
+            return None
+        materials = {"cafe": "warm wood, matte mineral plaster, layered ambient lighting", "restaurant": "refined durable finishes, warm indirect lighting, clear service circulation", "retail": "modular display system, durable flooring, illuminated storefront presentation", "studio": "acoustic surfaces, hygienic wet area, flexible partition system"}[model]
+        return ("Photorealistic interior architecture visualization, wide eye-level landscape view. " f"Business concept: {concept}. Approximate net area: {area:.0f} square metres. " f"Plan constraints: {counts['zones']} functional zones, {counts['walls']} interior walls, {counts['doors']} doors, {counts['sinks']} sinks, {counts['obstacles']} fixed obstacles. " "Respect clear circulation and keep the entrance, service and guest zones visibly distinct. " f"Material direction: {materials}. No people, no signage, no brand logo, no text, no watermark.")
+
     def search(self):
         from urllib.parse import parse_qs, urlparse
         query = parse_qs(urlparse(self.path).query)
@@ -269,6 +338,21 @@ class AppHandler(SimpleHTTPRequestHandler):
             history.append(now)
             return True
 
+    def render_budget_ok(self):
+        now = time.monotonic()
+        forwarded_for = self.headers.get("X-Forwarded-For", "").split(",", 1)[0].strip()
+        client = forwarded_for or self.client_address[0]
+        with CACHE_LOCK:
+            history, client_history = RENDER_CALL_LOG["__global__"], RENDER_CALL_LOG[client]
+            for entries in (history, client_history):
+                while entries and now - entries[0] > RENDER_WINDOW_SECONDS:
+                    entries.popleft()
+            if len(history) >= MAX_RENDERS_PER_WINDOW or len(client_history) >= MAX_RENDERS_PER_CLIENT:
+                return False
+            history.append(now)
+            client_history.append(now)
+            return True
+
     @staticmethod
     def provider_budget_ok(call_count):
         """Cap paid upstream requests even when public clients rotate IPs."""
@@ -329,7 +413,7 @@ class AppHandler(SimpleHTTPRequestHandler):
         self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
         self.send_header("Strict-Transport-Security", "max-age=31536000")
         self.send_header("Permissions-Policy", "geolocation=(), camera=(), microphone=()")
-        self.send_header("Content-Security-Policy", "default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; connect-src 'self' https://neunsivpakcbgvfxvprx.supabase.co; frame-src https://www.google.com https://maps.google.com")
+        self.send_header("Content-Security-Policy", "default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; connect-src 'self' https://neunsivpakcbgvfxvprx.supabase.co; img-src 'self' data:; frame-src https://www.google.com https://maps.google.com")
         super().end_headers()
 
 
