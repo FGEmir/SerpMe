@@ -28,12 +28,20 @@ function activeParameterSet() {
   const model = studioForm.elements.model.value;
   return model === concept.model ? concept.params : serviceParameters[model];
 }
+function updateTurnControl() {
+  const concept = studioCatalog.getConcept(studioConcept.value);
+  const model = studioForm.elements.model.value;
+  const modelNeedsServiceTurns = model === 'cafe' || model === 'restaurant';
+  const conceptUsesOwnVolumeMetric = ['fast-food', 'nightlife'].includes(concept.id) && model === concept.model;
+  document.querySelector('#turns-control').hidden = !modelNeedsServiceTurns || conceptUsesOwnVolumeMetric;
+}
 function renderStudioParameters() {
   const concept = studioCatalog.getConcept(studioConcept.value);
   const model = studioForm.elements.model.value;
   const isConceptModel = model === concept.model;
   const parameters = activeParameterSet();
   document.querySelector('#studio-parameters').innerHTML = `<p class="eyebrow">${isConceptModel ? 'KONSEPTE ÖZGÜ PARAMETRELER' : 'SEÇİLEN SERVİS MODELİ PARAMETRELERİ'}</p><div>${parameters.map(([key, label, value, min, max, step]) => `<label>${text(label)}<input name="param-${key}" type="number" value="${value}" min="${min}" max="${max}" step="${step || 1}" /></label>`).join('')}</div>`;
+  updateTurnControl();
 }
 function initializeStudioCatalog() {
   studioCategory.innerHTML = studioCatalog.categories.map(category => `<option value="${category.id}">${text(category.label)}</option>`).join('');
@@ -71,7 +79,7 @@ function planLayout({concept, conceptId, model, area, frontage, seating, turns, 
     {key: 'guest', name: model === 'retail' ? 'Satış alanı' : model === 'studio' ? 'Aktivite alanı' : 'Konuk alanı', area: guestArea, className: 'guest'},
     {key: 'back', name: 'Depo / arka alan', area: area * profile.back, className: 'back'},
   ];
-  return {concept, profile, area, frontage, depth, guestArea, peakGuests, dailyGuests, serviceTurns, efficiency, accessible, zones};
+  return {concept, conceptId, profile, area, frontage, depth, guestArea, peakGuests, dailyGuests, serviceTurns, efficiency, accessible, zones};
 }
 
 function zoneStyle(zone, plan) {
@@ -90,14 +98,27 @@ function renderPlan(plan) {
   document.querySelector('#layout-plan').innerHTML = `<div class="floor-shell" style="aspect-ratio:${Math.max(.7, Math.min(2.5, plan.frontage / plan.depth))}">${plan.zones.map(zone => `<div class="zone ${zone.className}" style="${zoneStyle(zone, plan)}"><span><b>${text(zone.name)}</b>${integer(zone.area)} m²</span></div>`).join('')}</div>`;
   document.querySelector('#peak-guests').textContent = `${plan.peakGuests} kişi`;
   document.querySelector('#daily-guests').textContent = `${plan.dailyGuests} kişi`;
+  const capacityCopy = plan.conceptId === 'accommodation' ? ['Günlük konaklayan', 'doluluk varsayımıyla']
+    : plan.conceptId === 'beauty' ? ['Günlük randevu kapasitesi', 'oda ve süre ile']
+      : plan.conceptId === 'repair' ? ['Günlük iş emri', 'istasyon kapasitesiyle']
+        : plan.conceptId === 'consulting' ? ['Günlük müşteri / ziyaret', 'ofis kullanımıyla']
+          : plan.profile === modelProfiles.retail ? ['Günlük ziyaret potansiyeli', 'alan akışı tahmini']
+            : ['Günlük ağırlama', 'servis turu ile'];
+  document.querySelector('#daily-capacity-label').textContent = capacityCopy[0];
+  document.querySelector('#daily-capacity-note').textContent = capacityCopy[1];
   document.querySelector('#guest-area').textContent = `${integer(plan.guestArea)} m²`;
   document.querySelector('#layout-efficiency').textContent = `%${plan.efficiency}`;
   const circulationNote = plan.accessible ? 'Erişilebilir dolaşım için ek alan ayrıldı.' : 'Dolaşım alanı yalnızca operasyon akışına göre ayrıldı.';
   document.querySelector('#layout-summary').textContent = `${integer(plan.area)} m² mekânda yaklaşık ${integer(plan.depth)} m derinlik varsayıldı. Konuk/satış alanı ${integer(plan.guestArea)} m²; ${plan.peakGuests} eş zamanlı kişi ve günde yaklaşık ${plan.dailyGuests} kişilik operasyon senaryosu üretir. ${circulationNote}`;
+  const volumeAction = plan.profile === modelProfiles.retail
+    ? `Günlük ${plan.dailyGuests} ziyaret potansiyelini kasa geçişi ve gerçek mağaza trafiğiyle haftalık doğrulayın.`
+    : plan.profile === modelProfiles.studio
+      ? `Günlük ${plan.dailyGuests} kişilik kullanım/randevu hedefini takvim doluluğu ve ekip kapasitesiyle haftalık doğrulayın.`
+      : `Günlük ${plan.dailyGuests} kişilik senaryoyu, seçilen ${plan.serviceTurns.toLocaleString('tr-TR')} servis turu ile takip edin; gerçek yaya trafiği ve satış verisiyle haftalık güncelleyin.`;
   const actions = [
     `Cephede karşılama ve servis akışını ayırın; ${plan.frontage.toFixed(1)} m cephe için girişte kuyruk oluşumunu sahada test edin.`,
     plan.efficiency < 35 ? 'Arka alan oranı yüksek. Depo ve hazırlık alanlarını modüler ekipmanla gözden geçirerek konuk alanını artırmayı değerlendirin.' : 'Konuk/satış alanı dengeli görünüyor. Masaları veya sergileri ana dolaşım hattını kesmeyecek şekilde yerleştirin.',
-    `Günlük ${plan.dailyGuests} kişilik senaryoyu, seçilen ${plan.serviceTurns.toLocaleString('tr-TR')} servis turu ile takip edin; gerçek yaya trafiği ve satış verisiyle haftalık güncelleyin.`,
+    volumeAction,
   ];
   document.querySelector('#layout-actions').innerHTML = actions.map(action => `<li>${text(action)}</li>`).join('');
 }
