@@ -6,6 +6,8 @@
   <title>SerpMe — Konum Bazlı İşletme Analizi</title>
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="liquid.css" />
+  <link rel="stylesheet" href="viability.css" />
+  <link rel="stylesheet" href="smooth.css" />
 </head>
 <body>
   <main>
@@ -39,6 +41,11 @@
         </label>
         <details class="finance-inputs wide">
           <summary>Finansal varsayımlar — başa baş analizi için</summary>
+          <div class="finance-mode" role="group" aria-label="Finansal varsayım yöntemi">
+            <label><input type="radio" name="financeMode" value="auto" checked /> Otomatik başlangıç senaryosu</label>
+            <label><input type="radio" name="financeMode" value="manual" /> Kendi varsayımlarım</label>
+          </div>
+          <p class="finance-note">Otomatik senaryo; işletme türü ve harita sinyallerinden başlangıç aralığı üretir. Yerel kira, maaş ve tedarik teklifleriyle doğrulanmalıdır.</p>
           <div class="finance-grid">
             <label>Aylık kira (₺)<input name="rent" type="number" min="0" value="120000" /></label>
             <label>Aylık sabit gider (₺)<input name="fixedCosts" type="number" min="0" value="90000" /></label>
@@ -64,8 +71,20 @@
       </div>
       <div class="score-card">
         <div class="score-ring"><strong id="opportunity-score">—</strong><span>/ 100</span></div>
-        <div><p class="eyebrow">FIRSAT SKORU</p><h3 id="opportunity-label">Hesaplanıyor</h3><p id="opportunity-text"></p></div>
+        <div><p class="eyebrow">MARKET VIABILITY SCORE</p><h3 id="opportunity-label">Hesaplanıyor</h3><p id="opportunity-text"></p><div class="analysis-badges"><span id="analysis-mode">—</span><span id="data-confidence">—</span></div></div>
       </div>
+      <section class="viability-section" aria-labelledby="viability-title">
+        <div class="section-heading"><div><p class="eyebrow">KANITA DAYALI ALT SKORLAR</p><h3 id="viability-title">Pazar uygulanabilirliği</h3></div><p>Eksik sinyaller tahmin edilmez; veri yokluğu güven düzeyine yansır.</p></div>
+        <div id="viability-components" class="viability-components"></div>
+        <div class="signal-grid">
+          <article><p class="eyebrow">NEIGHBOR MARKET SIGNAL</p><h3 id="neighbor-signal">—</h3><div id="radius-ladder" class="radius-ladder"></div></article>
+          <article><p class="eyebrow">TALEP PROXY'LERİ</p><h3 id="proxy-summary">—</h3><div id="proxy-list" class="proxy-list"></div></article>
+        </div>
+        <div class="reasoning-panel"><h4>Bu sonuca neden ulaştık?</h4><ul id="viability-reasons"></ul><p id="viability-limitations"></p></div>
+        <div id="evaluation-method" class="evaluation-method" hidden>
+          <p class="eyebrow">ALTERNATİF DEĞERLENDİRME YÖNTEMİ</p><h4 id="evaluation-method-title"></h4><p id="evaluation-method-summary"></p><ol id="evaluation-method-steps"></ol>
+        </div>
+      </section>
       <div class="metric-grid" id="metrics"></div>
       <section class="map-section" aria-labelledby="map-title">
         <div class="map-copy">
