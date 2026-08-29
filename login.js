@@ -7,11 +7,11 @@ async function authenticate(mode) {
   if (!email || password.length < 6) { authStatus.textContent = 'Geçerli e-posta ve en az 6 karakterlik şifre girin.'; return; }
   try {
     authStatus.textContent = 'İşlem sürüyor…';
-    const path = mode === 'signup' ? '/auth/v1/signup' : '/auth/v1/token?grant_type=password';
-    const payload = mode === 'signup' ? { email, password, data: { display_name: email.split('@')[0] }, options: { emailRedirectTo: `${window.location.origin}/portfolio.html` } } : { email, password };
+    const path = mode === 'signup' ? `/auth/v1/signup?redirect_to=${encodeURIComponent(`${window.location.origin}/`)}` : '/auth/v1/token?grant_type=password';
+    const payload = mode === 'signup' ? { email, password, data: { display_name: email.split('@')[0] } } : { email, password };
     const result = await SerpMeAuth.supabaseFetch(path, { method: 'POST', body: JSON.stringify(payload) });
     const session = result.session || result;
-    if (!session.access_token) { authStatus.textContent = 'Hesap oluşturuldu. E-postanızdaki onay bağlantısını açın; ardından giriş yapabilirsiniz.'; return; }
+    if (!session.access_token) { authStatus.textContent = 'Hesap oluşturuldu. Gelen kutunuzu ve gereksiz klasörünü kontrol edin; e-posta onayından sonra giriş yapabilirsiniz.'; return; }
     SerpMeAuth.setSession(session);
     window.location.href = '/portfolio.html';
   } catch (error) { authStatus.textContent = error.message; }
