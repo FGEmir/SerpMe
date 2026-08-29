@@ -8,9 +8,11 @@ async function authenticate(mode) {
   try {
     authStatus.textContent = 'İşlem sürüyor…';
     const path = mode === 'signup' ? '/auth/v1/signup' : '/auth/v1/token?grant_type=password';
-    const result = await SerpMeAuth.supabaseFetch(path, { method: 'POST', body: JSON.stringify({ email, password, data: { display_name: email.split('@')[0] } }) });
-    if (mode === 'signup' && !result.access_token) { authStatus.textContent = 'Hesap oluşturuldu. E-postanızdaki onay bağlantısını açın.'; return; }
-    SerpMeAuth.setSession(result);
+    const payload = mode === 'signup' ? { email, password, data: { display_name: email.split('@')[0] }, options: { emailRedirectTo: `${window.location.origin}/portfolio.html` } } : { email, password };
+    const result = await SerpMeAuth.supabaseFetch(path, { method: 'POST', body: JSON.stringify(payload) });
+    const session = result.session || result;
+    if (!session.access_token) { authStatus.textContent = 'Hesap oluşturuldu. E-postanızdaki onay bağlantısını açın; ardından giriş yapabilirsiniz.'; return; }
+    SerpMeAuth.setSession(session);
     window.location.href = '/portfolio.html';
   } catch (error) { authStatus.textContent = error.message; }
 }
