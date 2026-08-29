@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="liquid.css" />
   <link rel="stylesheet" href="smooth.css" />
   <link rel="stylesheet" href="launch.css" />
+  <link rel="stylesheet" href="catalog.css" />
 </head>
 <body>
   <main class="site-page launch-page">
@@ -20,11 +21,13 @@
       <form id="studio-form" class="studio-form">
         <p class="eyebrow">MEKÂN GİRDİLERİ</p>
         <h2>İşletme özellikleri</h2>
-        <label>Konsept<input name="concept" value="üçüncü nesil kahve" required /></label>
+        <label>Hizmet grubu<select id="studio-category" name="category"></select></label>
+        <label>Konsept<select id="studio-concept" name="concept"></select></label>
         <label>Servis modeli<select name="model"><option value="cafe">Kafe / hızlı servis</option><option value="restaurant">Restoran</option><option value="retail">Perakende</option><option value="studio">Stüdyo / spor</option></select></label>
         <div class="studio-input-grid"><label>Net alan (m²)<input name="area" type="number" min="20" max="2000" value="110" required /></label><label>Cephe genişliği (m)<input name="frontage" type="number" min="3" max="80" step=".5" value="8" required /></label></div>
         <div class="studio-input-grid"><label>Hedef oturma oranı<select name="seating"><option value="balanced">Dengeli</option><option value="dense">Yüksek kapasite</option><option value="spacious">Konfor odaklı</option></select></label><label>Günlük servis periyodu<select name="turns"><option value="2.2">2,2 tur · sakin</option><option value="3.2" selected>3,2 tur · dengeli</option><option value="4.2">4,2 tur · hızlı servis</option></select></label></div>
         <label class="toggle-label"><input name="accessible" type="checkbox" checked /> Erişilebilir dolaşım alanını koru</label>
+        <div id="studio-parameters" class="studio-parameters"></div>
         <button type="submit">Yerleşimi optimize et <span>→</span></button>
         <p class="studio-note">Kapasite, net operasyon alanı ve servis turu varsayımından üretilir. Yasal kişi kapasitesi için yetkili mimar ve yerel mevzuat kontrolü gerekir.</p>
       </form>
@@ -40,6 +43,6 @@
     </section>
     <footer class="site-footer"><span>© 2026 Fzl Studio</span><span>SerpMe · Konum tabanlı pazar istihbaratı</span><a href="/about.html">Hakkımızda</a></footer>
   </main>
-  <script src="supabase-config.js"></script><script src="auth.js"></script><script src="launch.js"></script>
+  <script src="supabase-config.js"></script><script src="auth.js"></script><script src="catalog.js?v=20260829-catalog"></script><script src="launch.js?v=20260829-catalog"></script>
 </body>
 </html>

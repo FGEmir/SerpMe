@@ -1,4 +1,7 @@
 const studioForm = document.querySelector('#studio-form');
+const studioCatalog = window.SerpMeCatalog;
+const studioCategory = document.querySelector('#studio-category');
+const studioConcept = document.querySelector('#studio-concept');
 const modelProfiles = {
   cafe: {label: 'Kafe / hızlı servis', front: .14, service: .19, back: .18, circulation: .20, sqmPerGuest: 1.65, defaultTurns: 3.2},
   restaurant: {label: 'Restoran', front: .10, service: .28, back: .17, circulation: .22, sqmPerGuest: 1.95, defaultTurns: 2.2},
@@ -8,16 +11,43 @@ const modelProfiles = {
 const integer = value => Math.max(0, Math.round(Number(value) || 0));
 const text = value => { const el = document.createElement('div'); el.textContent = value; return el.innerHTML; };
 
-function planLayout({concept, model, area, frontage, seating, turns, accessible}) {
+function fillStudioConcepts() {
+  const category = studioCatalog.getCategory(studioCategory.value);
+  studioConcept.innerHTML = category.concepts.map(concept => `<option value="${concept.id}">${text(concept.label)}</option>`).join('');
+  renderStudioParameters();
+}
+function renderStudioParameters() {
+  const concept = studioCatalog.getConcept(studioConcept.value);
+  document.querySelector('#studio-parameters').innerHTML = `<p class="eyebrow">KONSEPTE ÖZGÜ PARAMETRELER</p><div>${concept.params.map(([key, label, value, min, max, step]) => `<label>${text(label)}<input name="param-${key}" type="number" value="${value}" min="${min}" max="${max}" step="${step || 1}" /></label>`).join('')}</div>`;
+  studioForm.elements.model.value = concept.model;
+}
+function initializeStudioCatalog() {
+  studioCategory.innerHTML = studioCatalog.categories.map(category => `<option value="${category.id}">${text(category.label)}</option>`).join('');
+  fillStudioConcepts();
+  studioCategory.addEventListener('change', fillStudioConcepts);
+  studioConcept.addEventListener('change', renderStudioParameters);
+}
+initializeStudioCatalog();
+
+function planLayout({concept, conceptId, model, area, frontage, seating, turns, accessible, parameters}) {
   const profile = modelProfiles[model];
+  const kitchenRatio = parameters.kitchenRatio ? parameters.kitchenRatio / 100 : profile.service;
+  const storageRatio = parameters.warehouseShare ? parameters.warehouseShare / 100 : profile.back;
   const comfort = seating === 'spacious' ? 1.17 : seating === 'dense' ? .86 : 1;
   const circulation = profile.circulation + (accessible ? .05 : 0);
-  const fixedArea = area * (profile.front + profile.service + profile.back + circulation);
-  const guestArea = Math.max(0, area - fixedArea);
+  const fixedArea = area * (profile.front + kitchenRatio + storageRatio + circulation);
+  const displayArea = parameters.displayRatio ? area * parameters.displayRatio / 100 : null;
+  const guestArea = Math.max(0, displayArea || area - fixedArea);
   const sqmPerGuest = profile.sqmPerGuest * comfort;
-  const peakGuests = Math.max(1, Math.floor(guestArea / sqmPerGuest));
+  let peakGuests = Math.max(1, Math.floor(guestArea / sqmPerGuest));
   const serviceTurns = Number(turns || profile.defaultTurns);
-  const dailyGuests = Math.round(peakGuests * serviceTurns);
+  let dailyGuests = Math.round(peakGuests * serviceTurns);
+  if (conceptId === 'beauty') { peakGuests = Math.min(peakGuests, parameters.treatmentRooms * 2 + parameters.stations); dailyGuests = Math.round(peakGuests * (480 / parameters.appointmentMinutes)); }
+  if (conceptId === 'accommodation') { peakGuests = Math.round(parameters.roomCount * 1.8); dailyGuests = Math.round(peakGuests * parameters.occupancy / 100); }
+  if (conceptId === 'repair') { peakGuests = Math.min(peakGuests, parameters.workstations * 2); dailyGuests = Math.round(parameters.workstations * 4); }
+  if (conceptId === 'consulting') { peakGuests = Math.min(peakGuests, parameters.workstations + parameters.meetingRooms * 6); dailyGuests = Math.round(parameters.workstations * parameters.billableUtilization / 100 + parameters.meetingRooms * 5); }
+  if (conceptId === 'fast-food') dailyGuests = Math.round(peakGuests * (3600 / parameters.serviceSeconds) * 2.5 * (1 + parameters.pickupShare / 100));
+  if (conceptId === 'nightlife') { peakGuests = Math.round(peakGuests * (1 + parameters.standingShare / 100)); dailyGuests = Math.round(peakGuests * parameters.peakHours / 2); }
   const depth = area / frontage;
   const efficiency = Math.round(guestArea / area * 100);
   const zones = [
@@ -60,8 +90,10 @@ function renderPlan(plan) {
 studioForm.addEventListener('submit', event => {
   event.preventDefault();
   const form = new FormData(studioForm);
+  const selected = studioCatalog.getConcept(form.get('concept'));
+  const parameters = Object.fromEntries(selected.params.map(([key]) => [key, Number(form.get(`param-${key}`))]));
   renderPlan(planLayout({
-    concept: form.get('concept').trim(), model: form.get('model'), area: Number(form.get('area')),
-    frontage: Number(form.get('frontage')), seating: form.get('seating'), turns: form.get('turns'), accessible: form.get('accessible') === 'on'
+    concept: selected.label, conceptId: selected.id, model: selected.model, area: Number(form.get('area')),
+    frontage: Number(form.get('frontage')), seating: form.get('seating'), turns: form.get('turns'), accessible: form.get('accessible') === 'on', parameters
   }));
 });
