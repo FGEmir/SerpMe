@@ -12,7 +12,7 @@ from urllib.request import urlopen
 
 
 ROOT = Path(__file__).parent
-PUBLIC_FILES = {"/", "/index.html", "/styles.css", "/liquid.css", "/viability.css", "/smooth.css", "/catalog.css", "/editor.css", "/vision.css", "/vision-controls.css", "/concept-3d.css", "/catalog.js", "/app.js", "/auth.js", "/login.js", "/portfolio.js", "/launch.js", "/launch.css", "/concept-cafe-interior.png", "/supabase-config.js", "/about.html", "/login.html", "/portfolio.html", "/launch.html"}
+PUBLIC_FILES = {"/", "/index.html", "/styles.css", "/liquid.css", "/viability.css", "/smooth.css", "/ui-refinement.css", "/catalog.css", "/editor.css", "/vision.css", "/vision-controls.css", "/concept-3d.css", "/catalog.js", "/app.js", "/auth.js", "/login.js", "/portfolio.js", "/launch.js", "/launch.css", "/concept-cafe-interior.png", "/supabase-config.js", "/about.html", "/login.html", "/portfolio.html", "/launch.html"}
 REQUEST_WINDOW_SECONDS = 60
 MAX_SEARCHES_PER_WINDOW = 3
 PROVIDER_WINDOW_SECONDS = 3600

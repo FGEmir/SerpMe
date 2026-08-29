@@ -1,5 +1,9 @@
 const sb = window.SERPME_SUPABASE;
 const authStoreKey = 'serpme_auth_session';
+if (!document.querySelector('link[href="ui-refinement.css"]')) {
+  const refinement = document.createElement('link');
+  refinement.rel = 'stylesheet'; refinement.href = 'ui-refinement.css'; document.head.append(refinement);
+}
 
 function getSession() { try { return JSON.parse(localStorage.getItem(authStoreKey) || 'null'); } catch { return null; } }
 function setSession(session) { session ? localStorage.setItem(authStoreKey, JSON.stringify(session)) : localStorage.removeItem(authStoreKey); }
