@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Konsept Stüdyosu — SerpMe</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="liquid.css" />
+  <link rel="stylesheet" href="smooth.css" />
+  <link rel="stylesheet" href="launch.css" />
+</head>
+<body>
+  <main class="site-page launch-page">
+    <nav class="page-nav" aria-label="Ana menü">
+      <a class="brand" href="/"><span class="logo" aria-hidden="true"><i></i><i></i><i></i></span><span>Serp<span class="brand-accent">Me</span></span><small>MARKET INTELLIGENCE</small></a>
+      <div class="nav-links"><a href="/">Analiz</a><a href="/about.html">Hakkımızda</a><a class="nav-cta" data-auth-link href="/login.html">Giriş</a></div>
+    </nav>
+    <header class="studio-hero"><p class="eyebrow">KONSEPT STÜDYOSU · ÖN TASARIM</p><h1>Mekânı fikrine göre <em>planla.</em></h1><p>Alan, cephe, konsept ve servis modelinden operasyonel yerleşim ile kapasite senaryosu oluşturun. Bu bir ön tasarım aracıdır; yangın, erişilebilirlik ve ruhsat projelerinin yerine geçmez.</p></header>
+    <section class="studio-grid">
+      <form id="studio-form" class="studio-form">
+        <p class="eyebrow">MEKÂN GİRDİLERİ</p>
+        <h2>İşletme özellikleri</h2>
+        <label>Konsept<input name="concept" value="üçüncü nesil kahve" required /></label>
+        <label>Servis modeli<select name="model"><option value="cafe">Kafe / hızlı servis</option><option value="restaurant">Restoran</option><option value="retail">Perakende</option><option value="studio">Stüdyo / spor</option></select></label>
+        <div class="studio-input-grid"><label>Net alan (m²)<input name="area" type="number" min="20" max="2000" value="110" required /></label><label>Cephe genişliği (m)<input name="frontage" type="number" min="3" max="80" step=".5" value="8" required /></label></div>
+        <div class="studio-input-grid"><label>Hedef oturma oranı<select name="seating"><option value="balanced">Dengeli</option><option value="dense">Yüksek kapasite</option><option value="spacious">Konfor odaklı</option></select></label><label>Günlük servis periyodu<select name="turns"><option value="2.2">2,2 tur · sakin</option><option value="3.2" selected>3,2 tur · dengeli</option><option value="4.2">4,2 tur · hızlı servis</option></select></label></div>
+        <label class="toggle-label"><input name="accessible" type="checkbox" checked /> Erişilebilir dolaşım alanını koru</label>
+        <button type="submit">Yerleşimi optimize et <span>→</span></button>
+        <p class="studio-note">Kapasite, net operasyon alanı ve servis turu varsayımından üretilir. Yasal kişi kapasitesi için yetkili mimar ve yerel mevzuat kontrolü gerekir.</p>
+      </form>
+      <section id="studio-output" class="studio-output" aria-live="polite">
+        <div class="studio-empty"><span>⌁</span><h2>Planınız burada oluşacak.</h2><p>Girdileri düzenleyip yerleşimi oluşturun.</p></div>
+        <div id="studio-result" hidden>
+          <div class="studio-title"><div><p class="eyebrow">ÖNERİLEN YERLEŞİM</p><h2 id="layout-title">—</h2></div><span id="layout-badge">—</span></div>
+          <div id="layout-plan" class="layout-plan" role="img" aria-label="Önerilen mekân yerleşimi"></div>
+          <div class="capacity-grid"><article><p>Eş zamanlı konuk</p><strong id="peak-guests">—</strong><small>operasyonel tahmin</small></article><article><p>Günlük ağırlama</p><strong id="daily-guests">—</strong><small>servis turu ile</small></article><article><p>Konuk alanı</p><strong id="guest-area">—</strong><small>net kullanım alanı</small></article><article><p>Alan verimliliği</p><strong id="layout-efficiency">—</strong><small>oturma / satış alanı</small></article></div>
+          <div class="layout-explanation"><h3>Optimizasyon mantığı</h3><p id="layout-summary"></p><ul id="layout-actions"></ul></div>
+        </div>
+      </section>
+    </section>
+    <footer class="site-footer"><span>© 2026 Fzl Studio</span><span>SerpMe · Konum tabanlı pazar istihbaratı</span><a href="/about.html">Hakkımızda</a></footer>
+  </main>
+  <script src="supabase-config.js"></script><script src="auth.js"></script><script src="launch.js"></script>
+</body>
+</html>

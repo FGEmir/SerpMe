@@ -12,7 +12,7 @@ from urllib.request import urlopen
 
 
 ROOT = Path(__file__).parent
-PUBLIC_FILES = {"/", "/index.html", "/styles.css", "/liquid.css", "/viability.css", "/smooth.css", "/app.js", "/auth.js", "/login.js", "/portfolio.js", "/supabase-config.js", "/about.html", "/login.html", "/portfolio.html"}
+PUBLIC_FILES = {"/", "/index.html", "/styles.css", "/liquid.css", "/viability.css", "/smooth.css", "/app.js", "/auth.js", "/login.js", "/portfolio.js", "/launch.js", "/launch.css", "/supabase-config.js", "/about.html", "/login.html", "/portfolio.html", "/launch.html"}
 REQUEST_WINDOW_SECONDS = 60
 MAX_SEARCHES_PER_WINDOW = 3
 PROVIDER_WINDOW_SECONDS = 3600
@@ -57,6 +57,24 @@ def demo_results(business, location):
     ratings = [round(max(3.5, rating - seed * .08), 1) for rating in ratings]
     reviews = [max(35, count - seed * 47) for count in reviews]
     return {"demo": True, "local_results": [{"title": name, "rating": ratings[i], "reviews": reviews[i], "address": f"{location} çevresi", "open_state": "Açık" if i != 3 else "Kapalı"} for i, name in enumerate(names)]}
+
+
+def demo_payload(business, location, radius, concepts, provider_status=None):
+    """Return clearly-labelled fallback data when no live lookup is possible."""
+    payload = demo_results(business, location)
+    direct_by_radius = {str(item): demo_results(business, f"{location} · {item} m")["local_results"] for item in RADIUS_LADDER}
+    proxy_results = {key: demo_results(label.split(" OR ")[0], location)["local_results"] for key, label in PROXY_GROUPS.items()}
+    payload.update({
+        "search_radius_m": radius,
+        "precision_mode": "approximate_viewport",
+        "direct_by_radius": direct_by_radius,
+        "proxy_results": proxy_results,
+        "market_analysis": build_market_analysis(direct_by_radius, proxy_results, False),
+        "concept_analysis": {concept: demo_results(concept, location)["local_results"] for concept in concepts if concept.lower() != business.lower()},
+    })
+    if provider_status:
+        payload["provider_status"] = provider_status
+    return payload
 
 
 def radius_zoom(radius):
@@ -205,15 +223,7 @@ class AppHandler(SimpleHTTPRequestHandler):
         if not self.rate_limit_ok():
             return self.send_json({"error": "Çok fazla analiz isteği gönderildi. Lütfen bir dakika sonra tekrar deneyin."}, 429)
         if not api_key:
-            payload = demo_results(business, location)
-            direct_by_radius = {str(item): demo_results(business, f"{location} · {item} m")["local_results"] for item in RADIUS_LADDER}
-            proxy_results = {key: demo_results(label.split(" OR ")[0], location)["local_results"] for key, label in PROXY_GROUPS.items()}
-            payload["search_radius_m"] = radius
-            payload["precision_mode"] = "approximate_viewport"
-            payload["direct_by_radius"] = direct_by_radius
-            payload["proxy_results"] = proxy_results
-            payload["market_analysis"] = build_market_analysis(direct_by_radius, proxy_results, False)
-            payload["concept_analysis"] = {concept: demo_results(concept, location)["local_results"] for concept in concepts if concept.lower() != business.lower()}
+            payload = demo_payload(business, location, radius, concepts)
             self.cache_response(cache_key, payload)
             return self.send_json(payload)
         provider_calls = len(RADIUS_LADDER) + len(PROXY_GROUPS) + sum(1 for concept in concepts if concept.lower() != business.lower())
@@ -237,7 +247,11 @@ class AppHandler(SimpleHTTPRequestHandler):
             self.cache_response(cache_key, payload)
             self.send_json(payload)
         except Exception:
-            self.send_json({"error": "Veri sağlayıcısına şu anda erişilemiyor. Lütfen daha sonra tekrar deneyin."}, 502)
+            # The user can still explore the product while the upstream provider
+            # is unavailable; the frontend makes this fallback unmistakable.
+            payload = demo_payload(business, location, radius, concepts, "SerpAPI geçici olarak erişilemedi")
+            self.cache_response(cache_key, payload)
+            self.send_json(payload)
 
     def rate_limit_ok(self):
         now = time.monotonic()
@@ -307,6 +321,9 @@ class AppHandler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def end_headers(self):
+        # Static frontend assets change with each deployment; revalidate instead
+        # of keeping a stale browser copy after an analysis/model update.
+        self.send_header("Cache-Control", "no-cache, max-age=0")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "DENY")
         self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
