@@ -8,24 +8,39 @@ const modelProfiles = {
   retail: {label: 'Perakende', front: .10, service: .09, back: .20, circulation: .25, sqmPerGuest: 2.3, defaultTurns: 4.2},
   studio: {label: 'Stüdyo / spor', front: .10, service: .12, back: .16, circulation: .22, sqmPerGuest: 3.1, defaultTurns: 2.2}
 };
+const serviceParameters = {
+  cafe: [['counterLength','Bar uzunluğu (m)',4,1,20],['avgDwell','Ortalama kalış (dk)',55,15,180],['deliveryShare','Paket servis payı (%)',15,0,80]],
+  restaurant: [['kitchenRatio','Mutfak alanı (%)',28,15,45],['tableTurns','Masa turu / gün',2.2,1,6,.1],['avgParty','Ortalama grup büyüklüğü',2.4,1,10,.1]],
+  retail: [['displayRatio','Sergileme alanı (%)',55,20,80],['warehouseShare','Depo alanı (%)',20,8,55],['avgBasket','Ortalama sepet (₺)',650,50,20000]],
+  studio: [['workstations','Çalışma istasyonu',6,1,50],['appointmentMinutes','Hizmet süresi (dk)',60,15,240],['meetingRooms','Kapalı oda / toplantı odası',2,0,20]]
+};
 const integer = value => Math.max(0, Math.round(Number(value) || 0));
 const text = value => { const el = document.createElement('div'); el.textContent = value; return el.innerHTML; };
 
 function fillStudioConcepts() {
   const category = studioCatalog.getCategory(studioCategory.value);
   studioConcept.innerHTML = category.concepts.map(concept => `<option value="${concept.id}">${text(concept.label)}</option>`).join('');
+  studioForm.elements.model.value = category.concepts[0].model;
   renderStudioParameters();
+}
+function activeParameterSet() {
+  const concept = studioCatalog.getConcept(studioConcept.value);
+  const model = studioForm.elements.model.value;
+  return model === concept.model ? concept.params : serviceParameters[model];
 }
 function renderStudioParameters() {
   const concept = studioCatalog.getConcept(studioConcept.value);
-  document.querySelector('#studio-parameters').innerHTML = `<p class="eyebrow">KONSEPTE ÖZGÜ PARAMETRELER</p><div>${concept.params.map(([key, label, value, min, max, step]) => `<label>${text(label)}<input name="param-${key}" type="number" value="${value}" min="${min}" max="${max}" step="${step || 1}" /></label>`).join('')}</div>`;
-  studioForm.elements.model.value = concept.model;
+  const model = studioForm.elements.model.value;
+  const isConceptModel = model === concept.model;
+  const parameters = activeParameterSet();
+  document.querySelector('#studio-parameters').innerHTML = `<p class="eyebrow">${isConceptModel ? 'KONSEPTE ÖZGÜ PARAMETRELER' : 'SEÇİLEN SERVİS MODELİ PARAMETRELERİ'}</p><div>${parameters.map(([key, label, value, min, max, step]) => `<label>${text(label)}<input name="param-${key}" type="number" value="${value}" min="${min}" max="${max}" step="${step || 1}" /></label>`).join('')}</div>`;
 }
 function initializeStudioCatalog() {
   studioCategory.innerHTML = studioCatalog.categories.map(category => `<option value="${category.id}">${text(category.label)}</option>`).join('');
   fillStudioConcepts();
   studioCategory.addEventListener('change', fillStudioConcepts);
-  studioConcept.addEventListener('change', renderStudioParameters);
+  studioConcept.addEventListener('change', () => { studioForm.elements.model.value = studioCatalog.getConcept(studioConcept.value).model; renderStudioParameters(); });
+  studioForm.elements.model.addEventListener('change', renderStudioParameters);
 }
 initializeStudioCatalog();
 
@@ -91,9 +106,10 @@ studioForm.addEventListener('submit', event => {
   event.preventDefault();
   const form = new FormData(studioForm);
   const selected = studioCatalog.getConcept(form.get('concept'));
-  const parameters = Object.fromEntries(selected.params.map(([key]) => [key, Number(form.get(`param-${key}`))]));
+  const parameterSet = activeParameterSet();
+  const parameters = Object.fromEntries(parameterSet.map(([key]) => [key, Number(form.get(`param-${key}`))]));
   renderPlan(planLayout({
-    concept: selected.label, conceptId: selected.id, model: selected.model, area: Number(form.get('area')),
+    concept: selected.label, conceptId: selected.model === form.get('model') ? selected.id : null, model: form.get('model'), area: Number(form.get('area')),
     frontage: Number(form.get('frontage')), seating: form.get('seating'), turns: form.get('turns'), accessible: form.get('accessible') === 'on', parameters
   }));
 });

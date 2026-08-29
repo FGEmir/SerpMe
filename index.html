@@ -8,7 +8,6 @@
   <link rel="stylesheet" href="liquid.css" />
   <link rel="stylesheet" href="viability.css" />
   <link rel="stylesheet" href="smooth.css" />
-  <link rel="stylesheet" href="catalog.css" />
 </head>
 <body>
   <main>
@@ -23,8 +22,9 @@
         <p>Bir işletme türü ve detaylı adres girin. Yerel rekabeti, müşteri sinyallerini ve yatırım fırsatını saniyeler içinde görün.</p>
       </div>
       <form id="search-form" class="search-card">
-        <label>Hizmet grubu<select id="business-category" name="businessCategory"></select></label>
-        <label>İşletme konsepti<select id="business" name="business"></select></label>
+        <label>İşletme tipi
+          <input id="business" name="business" placeholder="Örn. üçüncü nesil kahve" required value="kahve dükkanı" />
+        </label>
         <label>Hedef mikro konum
           <input id="location" name="location" placeholder="Mahalle, cadde, kapı no, şehir" required value="Caferağa, Kadıköy, İstanbul" />
         </label>
@@ -36,8 +36,9 @@
             <option value="5000">5 km · geniş alan</option>
           </select>
         </label>
-        <label class="wide">Karşılaştırılacak konseptler<select id="concepts" name="concepts" multiple size="3" aria-describedby="concept-hint"></select><small id="concept-hint">Aynı gruptan en fazla üç konsept seçin.</small></label>
-        <div id="concept-parameters" class="concept-parameters wide" aria-live="polite"></div>
+        <label class="wide">Karşılaştırılacak konseptler
+          <input id="concepts" name="concepts" placeholder="Virgülle ayırın" value="brunch kafe, tatlıcı, çalışma kafe" />
+        </label>
         <details class="finance-inputs wide">
           <summary>Finansal varsayımlar — başa baş analizi için</summary>
           <div class="finance-mode" role="group" aria-label="Finansal varsayım yöntemi">
@@ -129,7 +130,6 @@
   <template id="metric-template"><article class="metric"><p></p><strong></strong><small></small></article></template>
   <script src="supabase-config.js"></script>
   <script src="auth.js"></script>
-  <script src="catalog.js?v=20260829-catalog"></script>
-  <script src="app.js?v=20260829-catalog"></script>
+  <script src="app.js?v=20260829-main"></script>
 </body>
 </html>

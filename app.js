@@ -5,29 +5,6 @@ const status = document.querySelector('#form-status');
 let activeReport = null;
 const num = (value) => Number(String(value || 0).replace(/[^\d.]/g, '')) || 0;
 const plural = (n, single, many) => `${n.toLocaleString('tr-TR')} ${n === 1 ? single : many}`;
-const catalog = window.SerpMeCatalog;
-const categorySelect = document.querySelector('#business-category');
-const businessSelect = document.querySelector('#business');
-const conceptsSelect = document.querySelector('#concepts');
-
-function renderCatalogParameters(concept) {
-  const target = document.querySelector('#concept-parameters');
-  target.innerHTML = `<p class="eyebrow">KONSEPTE ÖZGÜ OPERASYON PARAMETRELERİ</p><div>${concept.params.map(([, label, value, , , step]) => `<span><b>${escapeHtml(label)}</b><strong>${Number(value).toLocaleString('tr-TR')}</strong><small>${step ? 'ayarlanabilir' : 'başlangıç değeri'}</small></span>`).join('')}</div>`;
-}
-function fillConcepts() {
-  const category = catalog.getCategory(categorySelect.value);
-  businessSelect.innerHTML = category.concepts.map(concept => `<option value="${escapeHtml(concept.search)}" data-id="${concept.id}">${escapeHtml(concept.label)}</option>`).join('');
-  conceptsSelect.innerHTML = category.concepts.map((concept, index) => `<option value="${escapeHtml(concept.search)}" ${index > 0 ? 'selected' : ''}>${escapeHtml(concept.label)}</option>`).join('');
-  renderCatalogParameters(category.concepts[0]);
-}
-function initializeCatalog() {
-  if (!catalog || !categorySelect) return;
-  categorySelect.innerHTML = catalog.categories.map(category => `<option value="${category.id}">${escapeHtml(category.label)}</option>`).join('');
-  fillConcepts();
-  categorySelect.addEventListener('change', fillConcepts);
-  businessSelect.addEventListener('change', () => renderCatalogParameters(catalog.getConcept(businessSelect.selectedOptions[0]?.dataset.id)));
-}
-initializeCatalog();
 if (window.location.protocol === 'file:') {
   status.textContent = 'Canlı rapor için uygulamayı http://localhost:8000 üzerinden açın.';
 }
@@ -240,7 +217,7 @@ function makeReport(payload, business, location, finance) {
 }
 function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
 form.addEventListener('submit', async (event) => {
-  event.preventDefault(); const button=form.querySelector('button'); const business=form.business.value.trim(), location=form.location.value.trim(), concepts=Array.from(conceptsSelect.selectedOptions).map(option => option.value).filter(value => value !== business).slice(0, 3).join(','), radius=form.radius.value; const finance={rent:num(form.rent.value),fixedCosts:num(form.fixedCosts.value),ticket:num(form.ticket.value),margin:num(form.margin.value)};
+  event.preventDefault(); const button=form.querySelector('button'); const business=form.business.value.trim(), location=form.location.value.trim(), concepts=form.concepts.value.trim(), radius=form.radius.value; const finance={rent:num(form.rent.value),fixedCosts:num(form.fixedCosts.value),ticket:num(form.ticket.value),margin:num(form.margin.value)};
   button.disabled=true;button.textContent='Analiz hazırlanıyor…';
   status.textContent=''; status.className='form-status';
   try { if (!finance.ticket || !finance.margin) throw new Error('Finansal varsayımlarda sepet tutarı ve brüt marj sıfır olamaz.'); const res=await fetch(`/api/search?${new URLSearchParams({business,location,concepts,radius})}`); const payload=await res.json(); if(!res.ok) throw new Error(payload.error || 'Arama başarısız oldu.'); makeReport(payload,business,location,finance); status.textContent=payload.demo ? 'Demo raporu hazır. Canlı veriler için SERPAPI_KEY ekleyin.' : 'Canlı SerpAPI raporu adres metni ile hazır.'; status.classList.add('success'); empty.hidden=true;report.hidden=false;report.scrollIntoView({behavior:'smooth',block:'start'}); }
