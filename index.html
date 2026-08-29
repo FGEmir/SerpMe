@@ -23,10 +23,10 @@
       </div>
       <form id="search-form" class="search-card">
         <label>İşletme tipi
-          <input id="business" name="business" placeholder="Örn. üçüncü nesil kahve" required value="kahve dükkanı" />
+          <input id="business" name="business" maxlength="120" placeholder="Örn. üçüncü nesil kahve" required value="kahve dükkanı" />
         </label>
         <label>Hedef mikro konum
-          <input id="location" name="location" placeholder="Mahalle, cadde, kapı no, şehir" required value="Caferağa, Kadıköy, İstanbul" />
+          <input id="location" name="location" maxlength="200" placeholder="Mahalle, cadde, kapı no, şehir" required value="Caferağa, Kadıköy, İstanbul" />
         </label>
         <label>Tarama yarıçapı
           <select id="radius" name="radius">
@@ -37,7 +37,7 @@
           </select>
         </label>
         <label class="wide">Karşılaştırılacak konseptler
-          <input id="concepts" name="concepts" placeholder="Virgülle ayırın" value="brunch kafe, tatlıcı, çalışma kafe" />
+          <input id="concepts" name="concepts" maxlength="360" placeholder="Virgülle ayırın" value="brunch kafe, tatlıcı, çalışma kafe" />
         </label>
         <details class="finance-inputs wide">
           <summary>Finansal varsayımlar — başa baş analizi için</summary>

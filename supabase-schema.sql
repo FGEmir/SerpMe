@@ -53,7 +53,7 @@ create policy "users manage own ideas" on public.ideas for all using (owner_id =
 create policy "users manage own reports" on public.reports for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
 
 create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer set search_path = public as $$
+returns trigger language plpgsql security definer set search_path = '' as $$
 begin
   insert into public.profiles (id, display_name) values (new.id, coalesce(new.raw_user_meta_data ->> 'display_name', 'SerpMe kullanıcısı')) on conflict (id) do nothing;
   return new;
@@ -62,3 +62,26 @@ $$;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created after insert on auth.users for each row execute procedure public.handle_new_user();
+
+-- Input limits apply even when requests bypass the browser. Existing rows are
+-- left untouched; new and updated records must satisfy these constraints.
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'ideas_concept_length') then
+    alter table public.ideas add constraint ideas_concept_length check (char_length(concept) between 2 and 120) not valid;
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'ideas_location_length') then
+    alter table public.ideas add constraint ideas_location_length check (char_length(location) between 2 and 200) not valid;
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'ideas_notes_length') then
+    alter table public.ideas add constraint ideas_notes_length check (char_length(coalesce(notes, '')) <= 4000) not valid;
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'reports_business_length') then
+    alter table public.reports add constraint reports_business_length check (char_length(business) between 2 and 120) not valid;
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'reports_location_length') then
+    alter table public.reports add constraint reports_location_length check (char_length(location) between 2 and 200) not valid;
+  end if;
+end $$;
+
+revoke all on function public.handle_new_user() from public, anon, authenticated;

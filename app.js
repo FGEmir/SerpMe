@@ -170,7 +170,8 @@ function renderLocationMap(business, location, places, stats) {
   places.slice(0, 5).forEach((place, index) => {
     const item = document.createElement('article');
     item.className = 'map-business';
-    item.innerHTML = `<span>${String(index + 1).padStart(2, '0')}</span><div><strong>${escapeHtml(place.title || place.name || 'İsimsiz işletme')}</strong><small>${escapeHtml(place.address || place.type || 'Yakın çevre')}</small></div><b>${place.rating || '—'}<small>/5</small></b>`;
+    const rating = Number(place.rating);
+    item.innerHTML = `<span>${String(index + 1).padStart(2, '0')}</span><div><strong>${escapeHtml(place.title || place.name || 'İsimsiz işletme')}</strong><small>${escapeHtml(place.address || place.type || 'Yakın çevre')}</small></div><b>${Number.isFinite(rating) && rating >= 0 && rating <= 5 ? rating.toFixed(1) : '—'}<small>/5</small></b>`;
     list.append(item);
   });
 }

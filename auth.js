@@ -33,9 +33,13 @@ async function captureAuthRedirect() {
   history.replaceState({}, document.title, window.location.pathname);
   return currentUser();
 }
+async function signOut() {
+  try { await supabaseFetch('/auth/v1/logout', { method: 'POST' }); } catch { /* Local cleanup still prevents this browser from reusing the session. */ }
+  setSession(null);
+}
 function updateNav(user) {
   document.querySelectorAll('[data-auth-link]').forEach(link => { link.textContent = user ? 'Portföyüm' : 'Giriş'; link.href = user ? '/portfolio.html' : '/login.html'; });
-  document.querySelectorAll('[data-logout]').forEach(button => { button.hidden = !user; button.onclick = () => { setSession(null); window.location.href = '/'; }; });
+  document.querySelectorAll('[data-logout]').forEach(button => { button.hidden = !user; button.onclick = async () => { button.disabled = true; await signOut(); window.location.href = '/'; }; });
 }
-window.SerpMeAuth = { getSession, setSession, supabaseFetch, currentUser, captureAuthRedirect, updateNav };
+window.SerpMeAuth = { getSession, setSession, supabaseFetch, currentUser, captureAuthRedirect, signOut, updateNav };
 document.addEventListener('DOMContentLoaded', async () => updateNav(await captureAuthRedirect() || await currentUser()));
