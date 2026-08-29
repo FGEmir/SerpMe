@@ -24,6 +24,11 @@ create table if not exists public.reports (
   business text not null,
   location text not null,
   opportunity_score integer check (opportunity_score between 0 and 100),
+  market_viability_score integer check (market_viability_score between 0 and 100),
+  analysis_mode text check (analysis_mode in ('demand_validation', 'early_market', 'competition')),
+  viability_classification text,
+  data_confidence jsonb not null default '{}'::jsonb,
+  viability_components jsonb not null default '{}'::jsonb,
   density integer check (density between 0 and 100),
   average_rating numeric(2,1),
   total_reviews integer,
@@ -31,6 +36,13 @@ create table if not exists public.reports (
   report_payload jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
+
+-- Safe, repeatable migration for existing SerpMe databases.
+alter table public.reports add column if not exists market_viability_score integer check (market_viability_score between 0 and 100);
+alter table public.reports add column if not exists analysis_mode text check (analysis_mode in ('demand_validation', 'early_market', 'competition'));
+alter table public.reports add column if not exists viability_classification text;
+alter table public.reports add column if not exists data_confidence jsonb not null default '{}'::jsonb;
+alter table public.reports add column if not exists viability_components jsonb not null default '{}'::jsonb;
 
 alter table public.profiles enable row level security;
 alter table public.ideas enable row level security;

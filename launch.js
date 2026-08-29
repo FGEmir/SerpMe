@@ -91,7 +91,101 @@ function zoneStyle(zone, plan) {
 }
 
 let layoutEditor = null;
+let lastRenderedSignature = '';
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+function layoutPayload() {
+  const plan = layoutEditor.plan;
+  return {
+    signature: JSON.stringify({concept: plan.concept, area: plan.area, active: layoutEditor.activeFloor, floors: layoutEditor.floors}),
+    active_floor: layoutEditor.activeFloor,
+    plan: {concept: plan.concept, model: Object.keys(modelProfiles).find(key => modelProfiles[key] === plan.profile), area: plan.area},
+    floors: layoutEditor.floors.map(floor => ({
+      name: floor.name,
+      zones: floor.zones.map(({id, name, x, y, w, h}) => ({id, name, x, y, w, h})),
+      walls: floor.walls.map(({id, x, y, w, h}) => ({id, x, y, w, h})),
+      obstacles: floor.obstacles.map(({id, x, y, w, h}) => ({id, x, y, w, h})),
+      doors: floor.doors.map(({id, x, y, w, h}) => ({id, x, y, w, h})),
+      sinks: floor.sinks.map(({id, x, y, w, h}) => ({id, x, y, w, h}))
+    }))
+  };
+}
+let conceptViewAngle = 0;
+function drawConceptView() {
+  const canvas = document.querySelector('#concept-vision-canvas');
+  if (!canvas || !layoutEditor) return;
+  const context = canvas.getContext('2d'), floor = activeFloor(), model = layoutPayload().plan.model;
+  const width = canvas.width, height = canvas.height, sx = 4.45, sy = 2.05, sz = 3.4;
+  const point = (x, y, z = 0) => conceptViewAngle ? [width / 2 + (y - x) * sx, 500 + (x + y) * sy - z * sz] : [width / 2 + (x - y) * sx, 500 + (x + y) * sy - z * sz];
+  const polygon = (points, fill, stroke = 'rgba(255,255,255,.18)') => { context.beginPath(); points.forEach(([x, y], index) => index ? context.lineTo(x, y) : context.moveTo(x, y)); context.closePath(); context.fillStyle = fill; context.fill(); context.strokeStyle = stroke; context.lineWidth = 2; context.stroke(); };
+  const prism = (item, color, tall = 7) => {
+    const x = item.x, y = item.y, w = item.w || 5, h = item.h || 5;
+    const base = [point(x, y), point(x + w, y), point(x + w, y + h), point(x, y + h)];
+    const top = [point(x, y, tall), point(x + w, y, tall), point(x + w, y + h, tall), point(x, y + h, tall)];
+    polygon([base[1], base[2], top[2], top[1]], 'rgba(10,16,35,.36)'); polygon([base[2], base[3], top[3], top[2]], 'rgba(4,9,22,.48)'); polygon(top, color);
+  };
+  const furniture = (item, color, tall) => prism(item, color, tall);
+  const zone = key => floor.zones.find(item => item.className === key);
+  const placeTables = guest => {
+    const count = Math.max(3, Math.min(14, Math.floor((guest.w * guest.h) / 250))), columns = Math.ceil(Math.sqrt(count));
+    for (let index = 0; index < count; index += 1) {
+      const row = Math.floor(index / columns), column = index % columns, x = guest.x + 7 + column * Math.max(7, (guest.w - 15) / columns), y = guest.y + 8 + row * Math.max(8, (guest.h - 17) / Math.ceil(count / columns));
+      furniture({x, y, w: 4.6, h: 4.6}, '#c98e52', 4.2);
+      [[-2, 1], [5, 1], [1, -2], [1, 5]].forEach(([dx, dy]) => furniture({x: x + dx, y: y + dy, w: 1.6, h: 1.6}, '#5d7087', 2.2));
+    }
+  };
+  const placeShelves = guest => {
+    const count = Math.max(2, Math.min(6, Math.floor(guest.w / 11)));
+    for (let index = 0; index < count; index += 1) furniture({x: guest.x + 6 + index * Math.max(9, (guest.w - 13) / count), y: guest.y + 8, w: 5, h: Math.max(14, guest.h - 16)}, '#9c6e49', 13);
+  };
+  context.clearRect(0, 0, width, height);
+  const glow = context.createRadialGradient(width / 2, 145, 20, width / 2, 360, 660); glow.addColorStop(0, '#8d7d64'); glow.addColorStop(.38, '#3c4869'); glow.addColorStop(1, '#10162b'); context.fillStyle = glow; context.fillRect(0, 0, width, height);
+  polygon([point(0, 0), point(100, 0), point(100, 100), point(0, 100)], '#b58a5c', 'rgba(255,240,203,.7)');
+  context.strokeStyle = 'rgba(79,47,29,.24)'; context.lineWidth = 2;
+  for (let line = 10; line < 100; line += 10) { const a = point(line, 0), b = point(line, 100), c = point(0, line), d = point(100, line); context.beginPath(); context.moveTo(...a); context.lineTo(...b); context.moveTo(...c); context.lineTo(...d); context.stroke(); }
+  const zoneColors = {front: 'rgba(226,192,133,.47)', service: 'rgba(107,127,177,.43)', guest: 'rgba(99,144,119,.34)', back: 'rgba(126,94,112,.38)'};
+  floor.zones.forEach(item => prism(item, zoneColors[item.className] || 'rgba(99,144,119,.35)', .8));
+  // Exterior shell, open at the front so the interior remains visible.
+  [{x: 0, y: 0, w: 100, h: 3}, {x: 0, y: 0, w: 3, h: 100}, {x: 97, y: 0, w: 3, h: 100}].forEach(item => prism(item, '#4c566f', 27));
+  for (let pane = 10; pane < 92; pane += 20) prism({x: pane, y: .8, w: 13, h: 1.1}, '#85bdd0', 20);
+  floor.walls.forEach(item => prism(item, '#5a6278', 20));
+  floor.obstacles.forEach(item => prism(item, '#80665f', 10));
+  floor.doors.forEach(item => prism(item, '#d3a45a', 15));
+  floor.sinks.forEach(item => prism(item, '#8ed2dd', 7));
+  const front = zone('front'), service = zone('service'), guest = zone('guest'), back = zone('back');
+  if (front) furniture({x: front.x + 4, y: front.y + 5, w: Math.max(8, front.w - 8), h: 5}, '#c58c54', 9);
+  if (service) {
+    furniture({x: service.x + 3, y: service.y + 4, w: Math.max(9, service.w - 6), h: 6}, '#4d6380', 12);
+    furniture({x: service.x + 6, y: service.y + 12, w: Math.max(6, service.w - 12), h: 3}, '#d4bd8b', 9);
+  }
+  if (guest) model === 'retail' ? placeShelves(guest) : placeTables(guest);
+  if (back) { furniture({x: back.x + 4, y: back.y + 5, w: Math.max(7, back.w - 8), h: 5}, '#644e5b', 11); furniture({x: back.x + 6, y: back.y + 13, w: 4, h: 4}, '#558d75', 11); }
+  [25, 55, 83].forEach(x => { const [px, py] = point(x, 38, 26); const light = context.createRadialGradient(px, py, 1, px, py, 35); light.addColorStop(0, 'rgba(255,240,186,.94)'); light.addColorStop(1, 'rgba(255,240,186,0)'); context.fillStyle = light; context.beginPath(); context.arc(px, py, 34, 0, Math.PI * 2); context.fill(); context.fillStyle = '#fff2c2'; context.beginPath(); context.arc(px, py, 5, 0, Math.PI * 2); context.fill(); });
+  context.fillStyle = '#fff5dc'; context.font = '600 25px Arial'; context.fillText(`${layoutEditor.plan.concept} · ${floor.name}`, 34, 52);
+  context.fillStyle = 'rgba(255,255,255,.78)'; context.font = '16px Arial'; context.fillText('Malzeme, mobilya, aydınlatma ve mekânsal akışla canlı iç mekân maketi', 34, 79);
+}
+function setVisionStatus(message) { document.querySelector('#vision-render-status').textContent = message; }
+function updateVisionPreview() {
+  const vision = document.querySelector('#concept-vision');
+  if (vision.hidden) return;
+  drawConceptView();
+  document.querySelector('#vision-caption').textContent = 'Duvar, kapı, lavabo, engel, kat ve işletme tipine göre anında güncellenen ücretsiz 3D konsept maketi.';
+}
+function markVisionStale() {
+  const vision = document.querySelector('#concept-vision');
+  if (vision.hidden) return;
+  vision.dataset.stale = 'true';
+  updateVisionPreview();
+  setVisionStatus('Kat planı değişti. Ücretsiz 3D konsept maketi otomatik güncellendi.');
+}
+function requestConceptRender() {
+  if (!layoutEditor) return;
+  const payload = layoutPayload();
+  if (lastRenderedSignature === payload.signature) { setVisionStatus('Bu plan görseli zaten güncel.'); return; }
+  updateVisionPreview();
+  document.querySelector('#concept-vision').dataset.stale = 'false';
+  lastRenderedSignature = payload.signature;
+  setVisionStatus('Ücretsiz 3D konsept maketi güncellendi. Ek API veya kredi kullanılmadı.');
+}
 function initialEditorZones(plan) {
   return plan.zones.map((zone, index) => [
     {x: 4, y: 70, w: 25, h: 24}, {x: 31, y: 70, w: 28, h: 24},
@@ -122,7 +216,7 @@ function updateSelectedControls() {
   document.querySelector('#item-width').value = item.w || 6;
   document.querySelector('#item-height').value = item.h || 6;
   document.querySelector('#item-rotation').value = item.rotate || 0;
-  const sync = () => { item.shape = document.querySelector('#item-shape').value; item.w = Number(document.querySelector('#item-width').value); item.h = Number(document.querySelector('#item-height').value); item.rotate = Number(document.querySelector('#item-rotation').value); renderLayoutEditor(); setEditorStatus('Seçilen ögenin şekli ve boyutu güncellendi.'); };
+  const sync = () => { item.shape = document.querySelector('#item-shape').value; item.w = Number(document.querySelector('#item-width').value); item.h = Number(document.querySelector('#item-height').value); item.rotate = Number(document.querySelector('#item-rotation').value); renderLayoutEditor(); markVisionStale(); setEditorStatus('Seçilen ögenin şekli ve boyutu güncellendi.'); };
   ['#item-shape', '#item-width', '#item-height', '#item-rotation'].forEach(selector => { const control = document.querySelector(selector); control.oninput = sync; control.onchange = sync; });
 }
 function renderLayoutEditor() {
@@ -130,7 +224,7 @@ function renderLayoutEditor() {
   const floor = activeFloor();
   const tabs = document.querySelector('#floor-tabs');
   tabs.innerHTML = layoutEditor.floors.map((item, index) => `<button type="button" data-floor="${index}" class="${index === layoutEditor.activeFloor ? 'is-active' : ''}">${text(item.name)}</button>`).join('');
-  tabs.querySelectorAll('button').forEach(button => button.onclick = () => { layoutEditor.activeFloor = Number(button.dataset.floor); layoutEditor.selected = null; renderLayoutEditor(); setEditorStatus(`${activeFloor().name} düzenleniyor.`); });
+  tabs.querySelectorAll('button').forEach(button => button.onclick = () => { layoutEditor.activeFloor = Number(button.dataset.floor); layoutEditor.selected = null; renderLayoutEditor(); markVisionStale(); setEditorStatus(`${activeFloor().name} düzenleniyor.`); });
   document.querySelectorAll('[data-tool]').forEach(button => {
     button.classList.toggle('is-active', button.dataset.tool === layoutEditor.tool);
     button.onclick = () => { layoutEditor.tool = button.dataset.tool; layoutEditor.selected = null; renderLayoutEditor(); setEditorStatus(layoutEditor.tool === 'select' ? 'Taşı: bir alanı, duvarı veya engeli sürükleyin.' : `${layoutEditor.tool === 'wall' ? 'Duvar' : 'Engel'} eklemek için planın boş alanına tıklayın.`); };
@@ -154,7 +248,7 @@ function renderLayoutEditor() {
       const kind = layoutEditor.tool;
       const defaults = {wall: {w: 24, h: 3, shape: 'rectangle'}, obstacle: {w: 7, h: 9, shape: 'rounded'}, door: {w: 13, h: 4, shape: 'rounded'}, sink: {w: 6, h: 7, shape: 'circle'}}[kind];
       const item = {id: `${kind}-${Date.now()}`, x: clamp(point.x - defaults.w / 2, 0, 100 - defaults.w), y: clamp(point.y - defaults.h / 2, 0, 100 - defaults.h), rotate: 0, ...defaults};
-      item.kind = kind; floor[`${kind}s`].push(item); layoutEditor.selected = item; renderLayoutEditor(); setEditorStatus(`${kind === 'wall' ? 'Duvar' : kind === 'door' ? 'Kapı' : kind === 'sink' ? 'Lavabo' : 'Engel'} eklendi; Taşı aracına geçerek konumunu değiştirebilirsiniz.`); return;
+      item.kind = kind; floor[`${kind}s`].push(item); layoutEditor.selected = item; renderLayoutEditor(); markVisionStale(); setEditorStatus(`${kind === 'wall' ? 'Duvar' : kind === 'door' ? 'Kapı' : kind === 'sink' ? 'Lavabo' : 'Engel'} eklendi; Taşı aracına geçerek konumunu değiştirebilirsiniz.`); return;
     }
     if (!itemElement) return;
     const kind = itemElement.dataset.kind, item = getItem(kind, itemElement.dataset.id);
@@ -172,15 +266,15 @@ function renderLayoutEditor() {
     drag.item.x = clamp(x - drag.dx, 0, maxX); drag.item.y = clamp(y - drag.dy, 0, maxY);
     drag.element.style.left = `${drag.item.x}%`; drag.element.style.top = `${drag.item.y}%`;
   };
-  canvas.onpointerup = event => { if (drag) { canvas.releasePointerCapture(event.pointerId); drag = null; setEditorStatus('Konum güncellendi. Başka bir kat seçebilir veya engel ekleyebilirsiniz.'); } };
+  canvas.onpointerup = event => { if (drag) { canvas.releasePointerCapture(event.pointerId); drag = null; markVisionStale(); setEditorStatus('Konum güncellendi. Başka bir kat seçebilir veya engel ekleyebilirsiniz.'); } };
   document.querySelector('#delete-layout-item').onclick = () => {
     const selected = layoutEditor.selected; if (!selected || selected.kind === 'zone') { setEditorStatus('Silmek için önce eklediğiniz bir duvar veya engeli seçin.'); return; }
-    floor[`${selected.kind}s`] = floor[`${selected.kind}s`].filter(item => item.id !== selected.id); layoutEditor.selected = null; renderLayoutEditor(); setEditorStatus('Seçilen öge silindi.');
+    floor[`${selected.kind}s`] = floor[`${selected.kind}s`].filter(item => item.id !== selected.id); layoutEditor.selected = null; renderLayoutEditor(); markVisionStale(); setEditorStatus('Seçilen öge silindi.');
   };
   document.querySelector('#add-floor').onclick = () => {
     const next = layoutEditor.floors.length + 1;
     layoutEditor.floors.push({name: `Kat ${next}`, zones: initialEditorZones(layoutEditor.plan), walls: [], obstacles: [], doors: [], sinks: []});
-    layoutEditor.activeFloor = next - 1; layoutEditor.selected = null; renderLayoutEditor(); setEditorStatus(`Kat ${next} eklendi. Her kat bağımsız düzenlenebilir.`);
+    layoutEditor.activeFloor = next - 1; layoutEditor.selected = null; renderLayoutEditor(); markVisionStale(); setEditorStatus(`Kat ${next} eklendi. Her kat bağımsız düzenlenebilir.`);
   };
   document.querySelector('#optimize-layout').onclick = () => {
     const barriers = [...floor.walls, ...floor.obstacles, ...floor.sinks];
@@ -188,7 +282,7 @@ function renderLayoutEditor() {
       const overlap = zone.x < item.x + item.w && zone.x + zone.w > item.x && zone.y < item.y + item.h && zone.y + zone.h > item.y;
       if (overlap) zone.y = clamp(item.y + item.h + 3, 0, 100 - zone.h);
     }));
-    const capacity = applyCapacityPenalty(); renderLayoutEditor(); setEditorStatus(`Engeller dikkate alınarak yerleşim güncellendi. Aktif kat için tahmini kapasite ${capacity.peak} kişi.`);
+    const capacity = applyCapacityPenalty(); renderLayoutEditor(); markVisionStale(); setEditorStatus(`Engeller dikkate alınarak yerleşim güncellendi. Aktif kat için tahmini kapasite ${capacity.peak} kişi.`);
   };
   document.querySelector('#approve-layout').onclick = () => {
     const capacity = applyCapacityPenalty(), vision = document.querySelector('#concept-vision');
@@ -197,7 +291,9 @@ function renderLayoutEditor() {
     document.querySelector('#vision-title').textContent = `${layoutEditor.plan.concept} · iç mimari yönü`;
     document.querySelector('#vision-summary').textContent = `${activeFloor().name} için plan onaylandı. ${activeFloor().doors.length} kapı, ${activeFloor().sinks.length} lavabo ve ${activeFloor().walls.length + activeFloor().obstacles.length} fiziksel engel dikkate alınarak tahmini ${capacity.peak} eş zamanlı kişi kapasitesiyle tasarım yönü oluşturuldu.`;
     document.querySelector('#vision-materials').innerHTML = materialSet.map(item => `<span>${text(item)}</span>`).join('');
-    vision.scrollIntoView({behavior: 'smooth', block: 'start'}); setEditorStatus('Plan onaylandı; konsept görseli ve iç mimari yönü aşağıda hazır.');
+    vision.dataset.stale = 'true'; updateVisionPreview();
+    vision.scrollIntoView({behavior: 'smooth', block: 'start'}); setEditorStatus('Plan onaylandı; ücretsiz canlı önizleme güncellendi.');
+    requestConceptRender();
   };
 }
 function initializeLayoutEditor(plan) {
@@ -250,3 +346,6 @@ studioForm.addEventListener('submit', event => {
     frontage: Number(form.get('frontage')), seating: form.get('seating'), turns: form.get('turns'), accessible: form.get('accessible') === 'on', parameters
   }));
 });
+
+document.querySelector('#refresh-concept-vision').addEventListener('click', requestConceptRender);
+document.querySelector('#rotate-concept-vision').addEventListener('click', () => { conceptViewAngle = conceptViewAngle ? 0 : 1; drawConceptView(); setVisionStatus('3D konsept maketi farklı açıdan gösteriliyor.'); });

@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="catalog.css" />
   <link rel="stylesheet" href="editor.css" />
   <link rel="stylesheet" href="vision.css" />
+  <link rel="stylesheet" href="vision-controls.css" />
+  <link rel="stylesheet" href="concept-3d.css" />
 </head>
 <body>
   <main class="site-page launch-page">
@@ -46,7 +48,7 @@
             <div id="selected-item-controls" class="selected-item-controls" hidden><label>Şekil<select id="item-shape"><option value="rectangle">Dikdörtgen</option><option value="rounded">Yuvarlatılmış</option><option value="circle">Daire</option></select></label><label>Genişlik<input id="item-width" type="range" min="4" max="70" value="20" /></label><label>Yükseklik<input id="item-height" type="range" min="4" max="70" value="20" /></label><label>Döndürme<input id="item-rotation" type="range" min="0" max="180" value="0" /></label></div>
             <p id="editor-status" class="editor-status">Taşı aracını kullanarak alanları yeniden konumlandırabilirsiniz.</p>
           </section>
-          <section id="concept-vision" class="concept-vision" hidden><div><p class="eyebrow">ONAYLANAN PLAN · KONSEPT GÖRSELİ</p><h3 id="vision-title">İç mimari yönü</h3><p id="vision-summary"></p><div id="vision-materials" class="vision-materials"></div></div><figure><img src="concept-cafe-interior.png" alt="Örnek üçüncü nesil kahve mekânı iç mimari konsept fotoğrafı" /><figcaption>Örnek iç mimari renderi; onaylanan planın malzeme ve atmosfer yönünü anlatır.</figcaption></figure></section>
+          <section id="concept-vision" class="concept-vision" hidden><div><p class="eyebrow">ONAYLANAN PLAN · 3D KONSEPT</p><h3 id="vision-title">İç mimari yönü</h3><p id="vision-summary"></p><div id="vision-materials" class="vision-materials"></div><div class="vision-actions"><button id="refresh-concept-vision" type="button">3D görünümü yenile</button><button id="rotate-concept-vision" type="button">Görünümü döndür</button><p id="vision-render-status" role="status">Ücretsiz 3D önizleme, plan değişikliklerine göre otomatik güncellenir.</p></div></div><figure class="concept-3d-frame"><canvas id="concept-vision-canvas" width="1200" height="760" role="img" aria-label="Plan verilerinden oluşturulan üç boyutlu konsept maketi"></canvas><figcaption id="vision-caption">Duvar, kapı, lavabo, engel, kat ve işletme tipine göre güncellenen ücretsiz 3D konsept maketi.</figcaption></figure></section>
           <div class="capacity-grid"><article><p>Eş zamanlı konuk</p><strong id="peak-guests">—</strong><small>operasyonel tahmin</small></article><article><p id="daily-capacity-label">Günlük ağırlama</p><strong id="daily-guests">—</strong><small id="daily-capacity-note">servis turu ile</small></article><article><p>Konuk alanı</p><strong id="guest-area">—</strong><small>net kullanım alanı</small></article><article><p>Alan verimliliği</p><strong id="layout-efficiency">—</strong><small>oturma / satış alanı</small></article></div>
           <div class="layout-explanation"><h3>Optimizasyon mantığı</h3><p id="layout-summary"></p><ul id="layout-actions"></ul></div>
         </div>
@@ -54,6 +56,6 @@
     </section>
     <footer class="site-footer"><span>© 2026 Fzl Studio</span><span>SerpMe · Konum tabanlı pazar istihbaratı</span><a href="/about.html">Hakkımızda</a></footer>
   </main>
-  <script src="supabase-config.js"></script><script src="auth.js"></script><script src="catalog.js?v=20260829-catalog"></script><script src="launch.js?v=20260829-layout-controls-v2"></script>
+  <script src="supabase-config.js"></script><script src="auth.js"></script><script src="catalog.js?v=20260829-catalog"></script><script src="launch.js?v=20260829-layout-vision-v1"></script>
 </body>
 </html>
