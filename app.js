@@ -127,9 +127,9 @@ function renderBusinessPlan(stats, business, finance) {
 }
 
 const COMPONENT_LABELS = {
-  demand: 'Demand', commercial_activity: 'Commercial Activity', target_customer_presence: 'Target Customer Presence',
-  accessibility: 'Accessibility', competition_gap: 'Competition Gap', neighbor_market_signal: 'Neighbor Market Signal',
-  location_compatibility: 'Location Compatibility'
+  demand: 'Talep', commercial_activity: 'Ticari hareketlilik', target_customer_presence: 'Hedef müşteri',
+  accessibility: 'Erişilebilirlik', competition_gap: 'Rekabet boşluğu', neighbor_market_signal: 'Komşu pazar sinyali',
+  location_compatibility: 'Konum uyumu'
 };
 const MODE_LABELS = { demand_validation: 'Demand Validation Mode', early_market: 'Early Market Analysis', competition: 'Competition Analysis' };
 const PROXY_LABELS = { commercial_activity: 'Restoran · perakende · market', target_customer_presence: 'Okul · ofis · otel · spor', accessibility: 'Toplu taşıma', indirect_demand: 'Dolaylı talep işletmeleri' };
