@@ -9,7 +9,8 @@ async function supabaseFetch(path, options = {}) {
   if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
   const response = await fetch(`${sb.url}${path}`, { ...options, headers });
   const body = response.status === 204 ? null : await response.json().catch(() => null);
-  if (!response.ok) throw new Error(body?.message || body?.error_description || 'İşlem tamamlanamadı.');
+  const detail = body?.message || body?.error_description || body?.msg || (typeof body?.error === 'string' ? body.error : '');
+  if (!response.ok) throw new Error(detail || `İşlem tamamlanamadı (kod: ${response.status}).`);
   return body;
 }
 async function refreshSession() {
