@@ -176,6 +176,17 @@ function renderLocationMap(business, location, places, stats) {
   });
 }
 
+function displayOpeningHours(value) {
+  return String(value || 'Status unknown')
+    .replace(/24 saat açık/gi, 'Open 24 hours')
+    .replace(/açık/gi, 'Open')
+    .replace(/kapalı/gi, 'Closed')
+    .replace(/(?:saat\s*)?(\d{1,2}(?::\d{2})?)\s*['’]?(?:de|da)\s*kapanıyor/gi, 'Closes at $1')
+    .replace(/(?:saat\s*)?(\d{1,2}(?::\d{2})?)\s*['’]?(?:de|da)\s*açılıyor/gi, 'Opens at $1')
+    .replace(/bugün/gi, 'today')
+    .replace(/yarın/gi, 'tomorrow');
+}
+
 function makeReport(payload, business, location, finance) {
   const places = payload.local_results || payload.place_results || [];
   const {ratings, openCount, averageRating, reviewTotal, reviewAverage, density} = summarize(places);
@@ -212,7 +223,7 @@ function makeReport(payload, business, location, finance) {
   const titleInput = document.querySelector('#feasibility-title');
   if (titleInput && !titleInput.value) titleInput.value = `${location.split(',')[0]} ${business}`;
   renderLocationMap(business, location, featured, {density, averageRating});
-  featured.forEach(place => { const row=document.createElement('div');row.className='result'; const rawState=place.open_state || 'Status unknown'; const state=/^açık$/i.test(rawState) ? 'Open' : /^kapalı$/i.test(rawState) ? 'Closed' : rawState; const score = place.comparisonScore ? `<small class="match">Match ${place.comparisonScore}/100</small>` : ''; row.innerHTML=`<strong>${escapeHtml(place.title || place.name || 'Unnamed business')} ${score}</strong><span class="rating">★ ${place.rating || '—'} <small>(${num(place.reviews).toLocaleString('en-GB')})</small></span><span>${escapeHtml(place.address || place.type || '')}</span><span class="${/açık|open/i.test(rawState)?'open':'closed'}">${escapeHtml(state)}</span>`;list.append(row); });
+  featured.forEach(place => { const row=document.createElement('div');row.className='result'; const rawState=place.open_state || place.hours || 'Status unknown'; const state=displayOpeningHours(rawState); const score = place.comparisonScore ? `<small class="match">Match ${place.comparisonScore}/100</small>` : ''; row.innerHTML=`<strong>${escapeHtml(place.title || place.name || 'Unnamed business')} ${score}</strong><span class="rating">★ ${place.rating || '—'} <small>(${num(place.reviews).toLocaleString('en-GB')})</small></span><span>${escapeHtml(place.address || place.type || '')}</span><span class="${/açık|open/i.test(rawState)?'open':'closed'}">${escapeHtml(state)}</span>`;list.append(row); });
   renderConcepts(payload.concept_analysis, location);
   renderBusinessPlan({density}, business, finance);
 }
