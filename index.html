@@ -93,7 +93,7 @@
           <div class="map-stats"><article><span>Map density</span><strong id="map-density">—</strong></article><article><span>Average rating</span><strong id="map-rating">—</strong></article><article><span>Businesses reviewed</span><strong id="map-business-count">—</strong></article></div>
           <p class="map-note">Businesses are drawn from Google Maps results matching the entered address and selected category.</p>
         </div>
-        <div class="map-frame-wrap"><iframe id="location-map" title="Seçilen konumun haritası" loading="lazy" referrerpolicy="no-referrer"></iframe></div>
+        <div class="map-frame-wrap"><iframe id="location-map" title="Map of the selected location" loading="lazy" referrerpolicy="no-referrer"></iframe></div>
         <div class="map-businesses" id="map-businesses"></div>
       </section>
       <div class="insight-grid">
@@ -126,7 +126,7 @@
         <div><p class="eyebrow">FEASIBILITY STEP</p><h3>Move the idea toward an investment decision</h3><p>Save this analysis to your portfolio with risks, validation priorities, and the first action.</p></div>
         <div class="feasibility-grid">
           <label>Idea name<input id="feasibility-title" placeholder="e.g. Caferağa study cafe" /></label>
-          <label>Stage<select id="feasibility-stage"><option>Idea</option><option>Research</option><option>Validation</option><option>Investment</option></select></label>
+          <label>Stage<select id="feasibility-stage"><option value="Fikir">Idea</option><option value="Araştırma">Research</option><option value="Doğrulama">Validation</option><option value="Yatırım">Investment</option></select></label>
           <label class="wide">Validation note<textarea id="feasibility-notes" placeholder="Footfall count, rent quote, menu test, or critical assumption..."></textarea></label>
           <button id="save-report-button" type="button">Save to portfolio and report <span>→</span></button><p id="save-status" class="form-status" role="status"></p>
         </div>
@@ -142,6 +142,6 @@
   <template id="metric-template"><article class="metric"><p></p><strong></strong><small></small></article></template>
   <script src="supabase-config.js"></script>
   <script src="auth.js"></script>
-  <script src="app.js?v=20260829-demand-lab-v1"></script>
+  <script src="app.js?v=20260902-english-ui-v2"></script>
 </body>
 </html>

@@ -4,7 +4,7 @@ const empty = document.querySelector('#empty-state');
 const status = document.querySelector('#form-status');
 let activeReport = null;
 const num = (value) => Number(String(value || 0).replace(/[^\d.]/g, '')) || 0;
-const plural = (n, single, many) => `${n.toLocaleString('tr-TR')} ${n === 1 ? single : many}`;
+const plural = (n, single, many) => `${n.toLocaleString('en-GB')} ${n === 1 ? single : many}`;
 if (window.location.protocol === 'file:') {
   status.textContent = 'Open the app through http://localhost:8000 for a live report.';
 }
@@ -65,17 +65,17 @@ function renderConcepts(concepts, location) {
     const el = document.createElement('div'); el.className = 'concept';
     const verdict = index === 0 ? 'Recommended concept' : item.density >= 65 ? 'High competition' : 'Alternative option';
     const examples = item.matches.slice(0, 2).map(place => place.title).join(' · ');
-    el.innerHTML = `<span class="concept-rank">${index + 1}</span><span><strong>${escapeHtml(item.name)}</strong><small>${verdict} · ${item.matches.length} uyumlu işletme · ${item.density}% yoğunluk</small></span><span><small>${item.reviewTotal.toLocaleString('tr-TR')} yorum · ${item.averageRating ? item.averageRating.toFixed(1) : '—'} puan<br>${escapeHtml(examples)}</small></span><span class="concept-score">${item.score}<small>/100</small></span>`;
+    el.innerHTML = `<span class="concept-rank">${index + 1}</span><span><strong>${escapeHtml(item.name)}</strong><small>${verdict} · ${item.matches.length} matching businesses · ${item.density}% density</small></span><span><small>${item.reviewTotal.toLocaleString('en-GB')} reviews · ${item.averageRating ? item.averageRating.toFixed(1) : '—'} rating<br>${escapeHtml(examples)}</small></span><span class="concept-score">${item.score}<small>/100</small></span>`;
     list.append(el);
   });
 }
 function financeProfile(business) {
   const term = normalize(business);
-  if (/restoran|lokanta|burger|pizza|kebap|doner/.test(term)) return {ticket: 520, margin: 58, dailyBase: 72, label: 'servis restoranı'};
-  if (/kahve|kafe|cafe|brunch|pastane|tatli|bakery/.test(term)) return {ticket: 280, margin: 64, dailyBase: 58, label: 'kafe / hızlı servis'};
-  if (/market|magaza|perakende|butik/.test(term)) return {ticket: 650, margin: 43, dailyBase: 42, label: 'perakende'};
-  if (/spor|fitness|gym/.test(term)) return {ticket: 850, margin: 60, dailyBase: 28, label: 'üyelik / spor'};
-  return {ticket: 350, margin: 55, dailyBase: 48, label: 'genel hizmet / perakende'};
+  if (/restoran|lokanta|restaurant|burger|pizza|kebap|doner/.test(term)) return {ticket: 520, margin: 58, dailyBase: 72, label: 'service restaurant'};
+  if (/kahve|kafe|coffee|cafe|brunch|pastane|tatli|bakery/.test(term)) return {ticket: 280, margin: 64, dailyBase: 58, label: 'cafe / quick service'};
+  if (/market|magaza|retail|perakende|butik/.test(term)) return {ticket: 650, margin: 43, dailyBase: 42, label: 'retail'};
+  if (/spor|fitness|gym/.test(term)) return {ticket: 850, margin: 60, dailyBase: 28, label: 'membership / fitness'};
+  return {ticket: 350, margin: 55, dailyBase: 48, label: 'general service / retail'};
 }
 
 function resolveFinance(business, finance, analysis) {
@@ -85,7 +85,7 @@ function resolveFinance(business, finance, analysis) {
   const marketFactor = .62 + (analysis.components.demand / 100) * .42 + (analysis.components.accessibility / 100) * .14;
   const dailyTransactions = Math.max(20, Math.round(profile.dailyBase * marketFactor));
   const monthlyRevenue = dailyTransactions * profile.ticket * 30;
-  // Bunlar konuma ait kira verisi değildir; yalnızca ilk senaryo için işletme oranlarıdır.
+  // These are operating ratios for an initial scenario, not rent data for the location.
   const suggested = {
     ticket: profile.ticket,
     margin: profile.margin,
@@ -109,19 +109,19 @@ function renderBusinessPlan(stats, business, finance) {
   const dailyTransactions = Math.ceil(monthlyTransactions / 30);
   const turnover = monthlyTransactions * finance.ticket;
   const workingCapital = fixed * 3;
-  const densityRisk = stats.density >= 65 ? 'yüksek rekabet' : stats.density >= 38 ? 'kontrollü rekabet' : 'düşük rekabet';
-  document.querySelector('#plan-summary').textContent = `${business} için pazar ${densityRisk} gösteriyor. ${finance.source} ile ₺${finance.ticket.toLocaleString('tr-TR')} ortalama sepet ve %${finance.margin} brüt marj kullanıldı; güven düzeyi: ${finance.confidence}.`;
+  const densityRisk = stats.density >= 65 ? 'high competition' : stats.density >= 38 ? 'controlled competition' : 'low competition';
+  document.querySelector('#plan-summary').textContent = `The market for ${business} shows ${densityRisk}. ${finance.source} uses an average transaction of ₺${finance.ticket.toLocaleString('en-GB')} and a ${finance.margin}% gross margin; confidence: ${finance.confidence}.`;
   const values = [
-    ['Günlük başa baş', `${dailyTransactions} işlem`, '30 gün varsayımı'],
-    ['Aylık başa baş ciro', `₺${Math.round(turnover).toLocaleString('tr-TR')}`, 'KDV/vergi hariç'],
-    ['Aylık sabit yük', `₺${fixed.toLocaleString('tr-TR')}`, finance.source.startsWith('Otomatik') ? 'senaryo tahmini' : 'kira + sabit gider'],
-    ['3 aylık işletme sermayesi', `₺${workingCapital.toLocaleString('tr-TR')}`, 'nakit tamponu']
+    ['Daily break-even', `${dailyTransactions} transactions`, '30-day assumption'],
+    ['Monthly break-even revenue', `₺${Math.round(turnover).toLocaleString('en-GB')}`, 'excluding VAT/tax'],
+    ['Monthly fixed load', `₺${fixed.toLocaleString('en-GB')}`, finance.source.startsWith('Automatic') ? 'scenario estimate' : 'rent + fixed costs'],
+    ['Three-month working capital', `₺${workingCapital.toLocaleString('en-GB')}`, 'cash buffer']
   ];
   const grid = document.querySelector('#plan-metrics'); grid.innerHTML = values.map(([label,value,note]) => `<article><p>${label}</p><strong>${value}</strong><p>${note}</p></article>`).join('');
   const actions = [
-    `Açılıştan önce günlük en az ${dailyTransactions} işlem hedefini; yaya trafiği sayımı, teslimat kapsaması ve oturma kapasitesiyle doğrulayın.`,
-    stats.density >= 65 ? 'Fiyat rekabeti yerine net bir niş belirleyin: günün belirli saatinde hızlı servis, ürün uzmanlığı veya çalışma deneyimi gibi ölçülebilir bir fark yaratın.' : 'Düşük/orta yoğunluğu ilk müşteri kazanımı için kullanın; açılış teklifini tekrar ziyaret ve sadakat programıyla bağlayın.',
-    `İlk 90 gün için en az ₺${workingCapital.toLocaleString('tr-TR')} likit tampon ayırın; haftalık olarak sepet ortalaması, brüt marj ve günlük işlem sayısını planla karşılaştırın.`
+    `Before opening, validate a target of at least ${dailyTransactions} daily transactions through footfall counts, delivery coverage, and seating capacity.`,
+    stats.density >= 65 ? 'Choose a clear niche instead of competing only on price: faster service at a specific time, product expertise, or a stronger work experience.' : 'Use low or moderate density for first customer acquisition, then connect the opening offer to repeat visits and a loyalty programme.',
+    `Keep at least ₺${workingCapital.toLocaleString('en-GB')} as a liquid buffer for the first 90 days and compare average transaction, gross margin, and daily transactions with the plan every week.`
   ];
   document.querySelector('#plan-actions').innerHTML = actions.map(action => `<li>${escapeHtml(action)}</li>`).join('');
 }
@@ -142,10 +142,10 @@ function renderViability(analysis) {
     return `<article><div><span>${escapeHtml(COMPONENT_LABELS[key] || key)}</span><b>%${weight}</b></div><strong>${value}<small>/100</small></strong><i><em style="width:${value}%"></em></i></article>`;
   }).join('');
   document.querySelector('#neighbor-signal').textContent = `${analysis.components.neighbor_market_signal}/100`;
-  document.querySelector('#radius-ladder').innerHTML = Object.entries(analysis.neighbor_market.radius_counts).map(([radius, count]) => `<span><b>${Number(radius) / 1000 < 1 ? radius + ' m' : Number(radius) / 1000 + ' km'}</b>${count} işletme</span>`).join('');
+  document.querySelector('#radius-ladder').innerHTML = Object.entries(analysis.neighbor_market.radius_counts).map(([radius, count]) => `<span><b>${Number(radius) / 1000 < 1 ? radius + ' m' : Number(radius) / 1000 + ' km'}</b>${count} businesses</span>`).join('');
   const proxyEntries = Object.entries(analysis.proxy_counts || {});
   document.querySelector('#proxy-summary').textContent = `${proxyEntries.reduce((sum, [, count]) => sum + count, 0)} visible signals`;
-  document.querySelector('#proxy-list').innerHTML = proxyEntries.map(([key, count]) => `<span><b>${escapeHtml(PROXY_LABELS[key] || key)}</b>${count} sonuç</span>`).join('');
+  document.querySelector('#proxy-list').innerHTML = proxyEntries.map(([key, count]) => `<span><b>${escapeHtml(PROXY_LABELS[key] || key)}</b>${count} results</span>`).join('');
   document.querySelector('#viability-reasons').innerHTML = analysis.reasons.map(reason => `<li>${escapeHtml(reason)}</li>`).join('');
   document.querySelector('#viability-limitations').textContent = `Limits: ${analysis.limitations.join(' ')}`;
   const method = analysis.evaluation_method;
@@ -164,7 +164,7 @@ function renderLocationMap(business, location, places, stats) {
   document.querySelector('#map-location').textContent = `Live view for ${business} around ${location}`;
   document.querySelector('#map-density').textContent = `%${stats.density}`;
   document.querySelector('#map-rating').textContent = stats.averageRating ? `${stats.averageRating.toFixed(1)} / 5` : '—';
-  document.querySelector('#map-business-count').textContent = places.length.toLocaleString('tr-TR');
+  document.querySelector('#map-business-count').textContent = places.length.toLocaleString('en-GB');
   const list = document.querySelector('#map-businesses');
   list.innerHTML = '';
   places.slice(0, 5).forEach((place, index) => {
@@ -180,31 +180,31 @@ function makeReport(payload, business, location, finance) {
   const places = payload.local_results || payload.place_results || [];
   const {ratings, openCount, averageRating, reviewTotal, reviewAverage, density} = summarize(places);
   const analysis = payload.market_analysis;
-  if (!analysis) throw new Error('Pazar uygulanabilirlik verisi oluşturulamadı.');
+  if (!analysis) throw new Error('Market viability data could not be created.');
   finance = resolveFinance(business, finance, analysis);
   const score = analysis.score;
   const label = analysis.classification;
   document.querySelector('#report-title').textContent = `${business} · ${location}`;
-  document.querySelector('#data-source').textContent = payload.demo ? '· DEMO VERİSİ' : '· CANLI SERPAPI VERİSİ';
-  document.querySelector('#report-date').textContent = new Date().toLocaleDateString('tr-TR', {day:'numeric', month:'long', year:'numeric'}) + ' tarihinde oluşturuldu';
+  document.querySelector('#data-source').textContent = payload.demo ? '· DEMO DATA' : '· LIVE SERPAPI DATA';
+  document.querySelector('#report-date').textContent = `Created on ${new Date().toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'})}`;
   document.querySelector('#opportunity-score').textContent = score;
   document.querySelector('#opportunity-label').textContent = label;
   document.querySelector('#opportunity-text').textContent = analysis.evaluation_method?.id === 'catchment_proxy_validation'
-    ? 'Doğrudan emsal yetersiz olduğu için değerlendirme, çevresel talep sinyalleri ve doğrulama adımlarıyla yapıldı.'
-    : `${places.length} doğrudan sonuç ile çevresel talep proxy'leri birlikte değerlendirildi.`;
+    ? 'Direct comparables are limited, so the result uses surrounding demand signals and validation steps.'
+    : `${places.length} direct results were assessed together with surrounding demand proxies.`;
   renderViability(analysis);
   const metrics = [
-    ['Görünen rakip', places.length, 'Google Maps listesi'],
-    ['Harita yoğunluğu', `%${density}`, `${densityLabel(density)} yoğunluk`],
-    ['Ort. puan', averageRating ? averageRating.toFixed(1) + ' / 5' : '—', plural(ratings.length, 'puanlı sonuç', 'puanlı sonuç')],
-    ['Toplam yorum', reviewTotal.toLocaleString('tr-TR'), 'talep göstergesi'],
-    ['Açık görünen', places.length ? `%${Math.round(openCount / places.length * 100)}` : '—', 'anlık durum verisi']
+    ['Visible competitors', places.length, 'Google Maps list'],
+    ['Map density', `${density}%`, `${densityLabel(density)} density`],
+    ['Average rating', averageRating ? averageRating.toFixed(1) + ' / 5' : '—', plural(ratings.length, 'rated result', 'rated results')],
+    ['Total reviews', reviewTotal.toLocaleString('en-GB'), 'demand signal'],
+    ['Shown as open', places.length ? `${Math.round(openCount / places.length * 100)}%` : '—', 'current status data']
   ];
   const metricGrid = document.querySelector('#metrics'); metricGrid.innerHTML = '';
   metrics.forEach(([name, value, note]) => { const el=document.querySelector('#metric-template').content.cloneNode(true); el.querySelector('p').textContent=name;el.querySelector('strong').textContent=value;el.querySelector('small').textContent=note;metricGrid.append(el); });
-  document.querySelector('#competition-insight').textContent = `Google Maps yoğunluk endeksi %${density} (${densityLabel(density)}). ${places.length} işletme görünür durumda. ${places.length <= 2 ? 'Rakip azlığı fırsat sayılmadı; talep doğrulama sinyalleri öne alındı.' : density >= 65 ? 'Pazar kalabalık; net bir farklılaşma gerekli.' : 'Pazar erken aşamada; saha doğrulaması gerekli.'}`;
-  document.querySelector('#customer-insight').textContent = `Ortalama puan ${averageRating ? averageRating.toFixed(1) : 'mevcut değil'} ve işletme başına yaklaşık ${Math.round(reviewAverage).toLocaleString('tr-TR')} yorum var. ${averageRating && averageRating < 4.3 ? 'Hizmet kalitesinde iyileştirme için açık alan görünüyor.' : 'Müşteri beklentisi yüksek; deneyim kalitesi kritik.'}`;
-  document.querySelector('#recommendation').textContent = analysis.mode === 'demand_validation' ? 'En az iki farklı zaman diliminde yaya sayımı, kısa müşteri görüşmeleri ve düşük maliyetli talep testi yapmadan yatırım kararı vermeyin.' : score >= 60 ? 'Konumun yaya trafiğini ve kira düzeyini doğrulayın; zayıf yorumlarda tekrar eden sorunları teklifinizle çözün.' : 'Mikro-konum, özgün teklif ve fiyat avantajını doğrulayacak kısa saha çalışması yapın.';
+  document.querySelector('#competition-insight').textContent = `Google Maps density index: ${density}% (${densityLabel(density)}). ${places.length} businesses are visible. ${places.length <= 2 ? 'Few competitors were not treated as an opportunity; demand validation signals are prioritised.' : density >= 65 ? 'The market is crowded; clear differentiation is required.' : 'The market is at an early stage; field validation is required.'}`;
+  document.querySelector('#customer-insight').textContent = `Average rating is ${averageRating ? averageRating.toFixed(1) : 'not available'} with around ${Math.round(reviewAverage).toLocaleString('en-GB')} reviews per business. ${averageRating && averageRating < 4.3 ? 'There may be room to improve service quality.' : 'Customer expectations are high; experience quality is critical.'}`;
+  document.querySelector('#recommendation').textContent = analysis.mode === 'demand_validation' ? 'Do not make an investment decision before footfall counts at different times, short customer interviews, and a low-cost demand test.' : score >= 60 ? 'Validate local footfall and rent level, then solve recurring issues found in weak reviews with your offer.' : 'Run short field research to validate the micro-location, distinct offer, and price advantage.';
   const list = document.querySelector('#result-list'); list.innerHTML = '';
   const featured = selectFeatured(places, business, location);
   if (!featured.length) featured.push(...places.slice(0, 8));
@@ -212,17 +212,17 @@ function makeReport(payload, business, location, finance) {
   const titleInput = document.querySelector('#feasibility-title');
   if (titleInput && !titleInput.value) titleInput.value = `${location.split(',')[0]} ${business}`;
   renderLocationMap(business, location, featured, {density, averageRating});
-  featured.forEach(place => { const row=document.createElement('div');row.className='result'; const state=place.open_state || 'Durum bilinmiyor'; const score = place.comparisonScore ? `<small class="match">Uyum ${place.comparisonScore}/100</small>` : ''; row.innerHTML=`<strong>${escapeHtml(place.title || place.name || 'İsimsiz işletme')} ${score}</strong><span class="rating">★ ${place.rating || '—'} <small>(${num(place.reviews).toLocaleString('tr-TR')})</small></span><span>${escapeHtml(place.address || place.type || '')}</span><span class="${/açık|open/i.test(state)?'open':'closed'}">${escapeHtml(state)}</span>`;list.append(row); });
+  featured.forEach(place => { const row=document.createElement('div');row.className='result'; const rawState=place.open_state || 'Status unknown'; const state=/^açık$/i.test(rawState) ? 'Open' : /^kapalı$/i.test(rawState) ? 'Closed' : rawState; const score = place.comparisonScore ? `<small class="match">Match ${place.comparisonScore}/100</small>` : ''; row.innerHTML=`<strong>${escapeHtml(place.title || place.name || 'Unnamed business')} ${score}</strong><span class="rating">★ ${place.rating || '—'} <small>(${num(place.reviews).toLocaleString('en-GB')})</small></span><span>${escapeHtml(place.address || place.type || '')}</span><span class="${/açık|open/i.test(rawState)?'open':'closed'}">${escapeHtml(state)}</span>`;list.append(row); });
   renderConcepts(payload.concept_analysis, location);
   renderBusinessPlan({density}, business, finance);
 }
 function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
 form.addEventListener('submit', async (event) => {
   event.preventDefault(); const button=form.querySelector('button'); const business=form.business.value.trim(), location=form.location.value.trim(), concepts=form.concepts.value.trim(), radius=form.radius.value; const finance={rent:num(form.rent.value),fixedCosts:num(form.fixedCosts.value),ticket:num(form.ticket.value),margin:num(form.margin.value)};
-  button.disabled=true;button.textContent='Analiz hazırlanıyor…';
+  button.disabled=true;button.textContent='Preparing analysis…';
   status.textContent=''; status.className='form-status';
-  try { if (!finance.ticket || !finance.margin) throw new Error('Finansal varsayımlarda sepet tutarı ve brüt marj sıfır olamaz.'); const res=await fetch(`/api/search?${new URLSearchParams({business,location,concepts,radius})}`); const payload=await res.json(); if(!res.ok) throw new Error(payload.error || 'Arama başarısız oldu.'); makeReport(payload,business,location,finance); status.textContent=payload.demo ? 'Demo raporu hazır. Canlı veriler için SERPAPI_KEY ekleyin.' : 'Canlı SerpAPI raporu adres metni ile hazır.'; status.classList.add('success'); empty.hidden=true;report.hidden=false;report.scrollIntoView({behavior:'smooth',block:'start'}); }
-  catch(err){status.textContent=err.message;status.classList.remove('success')} finally {button.disabled=false;button.innerHTML='Pazarı analiz et <span>→</span>'}
+  try { if (!finance.ticket || !finance.margin) throw new Error('Average transaction value and gross margin cannot be zero.'); const res=await fetch(`/api/search?${new URLSearchParams({business,location,concepts,radius})}`); const payload=await res.json(); if(!res.ok) throw new Error(payload.error || 'Search could not be completed.'); makeReport(payload,business,location,finance); status.textContent=payload.demo ? `Demo report ready. ${payload.provider_status || 'Live data is unavailable or not configured for this environment.'}` : 'Live SerpAPI report is ready.'; status.classList.add('success'); empty.hidden=true;report.hidden=false;report.scrollIntoView({behavior:'smooth',block:'start'}); }
+  catch(err){status.textContent=err.message;status.classList.remove('success')} finally {button.disabled=false;button.innerHTML='Analyze market <span>→</span>'}
 });
 document.querySelector('#export-button').addEventListener('click',()=>window.print());
 function demandNumber(id) {
@@ -283,15 +283,15 @@ document.querySelector('#save-report-button').addEventListener('click', async ()
   const saveStatus = document.querySelector('#save-status');
   const user = await SerpMeAuth.currentUser();
   if (!user) { window.location.href = '/login.html'; return; }
-  if (!activeReport) { saveStatus.textContent = 'Önce bir pazar analizi oluşturun.'; return; }
+  if (!activeReport) { saveStatus.textContent = 'Create a market analysis first.'; return; }
   const title = document.querySelector('#feasibility-title').value.trim() || `${activeReport.location} ${activeReport.business}`;
   const stage = document.querySelector('#feasibility-stage').value;
   const notes = document.querySelector('#feasibility-notes').value.trim();
   const demandValidation = activeReport.demandValidation || collectDemandValidation();
   try {
-    saveStatus.textContent = 'Portföye kaydediliyor…';
+    saveStatus.textContent = 'Saving to portfolio…';
     const idea = await SerpMeAuth.supabaseFetch('/rest/v1/ideas', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ owner_id: user.id, title, concept: activeReport.business, location: activeReport.location, stage, notes }) });
     await SerpMeAuth.supabaseFetch('/rest/v1/reports', { method: 'POST', body: JSON.stringify({ owner_id: user.id, idea_id: idea[0].id, business: activeReport.business, location: activeReport.location, opportunity_score: activeReport.score, market_viability_score: activeReport.score, analysis_mode: activeReport.analysis.mode, viability_classification: activeReport.analysis.classification, data_confidence: activeReport.analysis.confidence, viability_components: activeReport.analysis.components, density: activeReport.density, average_rating: activeReport.averageRating || null, total_reviews: activeReport.reviewTotal, feasibility: { title, stage, notes, demand_validation: demandValidation }, report_payload: { places: activeReport.places, finance: activeReport.finance, market_analysis: activeReport.analysis, proxy_results: activeReport.proxyResults, direct_by_radius: activeReport.directByRadius, demand_validation: demandValidation } }) });
-    saveStatus.textContent = 'Analiz ve fizibilite notu portföyünüze kaydedildi.'; saveStatus.classList.add('success');
+    saveStatus.textContent = 'Analysis and feasibility note saved to your portfolio.'; saveStatus.classList.add('success');
   } catch (error) { saveStatus.textContent = error.message; saveStatus.classList.remove('success'); }
 });

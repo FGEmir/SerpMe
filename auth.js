@@ -14,7 +14,7 @@ async function supabaseFetch(path, options = {}) {
   const response = await fetch(`${sb.url}${path}`, { ...options, headers });
   const body = response.status === 204 ? null : await response.json().catch(() => null);
   const detail = body?.message || body?.error_description || body?.msg || (typeof body?.error === 'string' ? body.error : '');
-  if (!response.ok) throw new Error(detail || `İşlem tamamlanamadı (kod: ${response.status}).`);
+  if (!response.ok) throw new Error(detail || `Request could not be completed (status: ${response.status}).`);
   return body;
 }
 async function refreshSession() {

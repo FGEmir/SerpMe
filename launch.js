@@ -9,10 +9,10 @@ const modelProfiles = {
   studio: {label: 'Studio / fitness', front: .10, service: .12, back: .16, circulation: .22, sqmPerGuest: 3.1, defaultTurns: 2.2}
 };
 const serviceParameters = {
-  cafe: [['counterLength','Bar uzunluğu (m)',4,1,20],['avgDwell','Ortalama kalış (dk)',55,15,180],['deliveryShare','Paket servis payı (%)',15,0,80]],
-  restaurant: [['kitchenRatio','Mutfak alanı (%)',28,15,45],['tableTurns','Masa turu / gün',2.2,1,6,.1],['avgParty','Ortalama grup büyüklüğü',2.4,1,10,.1]],
-  retail: [['displayRatio','Sergileme alanı (%)',55,20,80],['warehouseShare','Depo alanı (%)',20,8,55],['avgBasket','Ortalama sepet (₺)',650,50,20000]],
-  studio: [['workstations','Çalışma istasyonu',6,1,50],['appointmentMinutes','Hizmet süresi (dk)',60,15,240],['meetingRooms','Kapalı oda / toplantı odası',2,0,20]]
+  cafe: [['counterLength','Counter length (m)',4,1,20],['avgDwell','Average visit duration (min)',55,15,180],['deliveryShare','Delivery share (%)',15,0,80]],
+  restaurant: [['kitchenRatio','Kitchen area (%)',28,15,45],['tableTurns','Table turns / day',2.2,1,6,.1],['avgParty','Average party size',2.4,1,10,.1]],
+  retail: [['displayRatio','Display area (%)',55,20,80],['warehouseShare','Storage area (%)',20,8,55],['avgBasket','Average basket (TRY)',650,50,20000]],
+  studio: [['workstations','Workstations',6,1,50],['appointmentMinutes','Appointment duration (min)',60,15,240],['meetingRooms','Private / meeting rooms',2,0,20]]
 };
 const integer = value => Math.max(0, Math.round(Number(value) || 0));
 const text = value => { const el = document.createElement('div'); el.textContent = value; return el.innerHTML; };
@@ -40,7 +40,7 @@ function renderStudioParameters() {
   const model = studioForm.elements.model.value;
   const isConceptModel = model === concept.model;
   const parameters = activeParameterSet();
-  document.querySelector('#studio-parameters').innerHTML = `<p class="eyebrow">${isConceptModel ? 'KONSEPTE ÖZGÜ PARAMETRELER' : 'SEÇİLEN SERVİS MODELİ PARAMETRELERİ'}</p><div>${parameters.map(([key, label, value, min, max, step]) => `<label>${text(label)}<input name="param-${key}" type="number" value="${value}" min="${min}" max="${max}" step="${step || 1}" /></label>`).join('')}</div>`;
+  document.querySelector('#studio-parameters').innerHTML = `<p class="eyebrow">${isConceptModel ? 'CONCEPT-SPECIFIC PARAMETERS' : 'SELECTED SERVICE MODEL PARAMETERS'}</p><div>${parameters.map(([key, label, value, min, max, step]) => `<label>${text(label)}<input name="param-${key}" type="number" value="${value}" min="${min}" max="${max}" step="${step || 1}" /></label>`).join('')}</div>`;
   updateTurnControl();
 }
 function initializeStudioCatalog() {
@@ -74,10 +74,10 @@ function planLayout({concept, conceptId, model, area, frontage, seating, turns, 
   const depth = area / frontage;
   const efficiency = Math.round(guestArea / area * 100);
   const zones = [
-    {key: 'front', name: model === 'retail' ? 'Vitrin / giriş' : 'Karşılama', area: area * profile.front, className: 'front'},
-    {key: 'service', name: model === 'restaurant' ? 'Mutfak / servis' : model === 'retail' ? 'Kasa / deneme' : 'Bar / servis', area: area * profile.service, className: 'service'},
-    {key: 'guest', name: model === 'retail' ? 'Satış alanı' : model === 'studio' ? 'Aktivite alanı' : 'Konuk alanı', area: guestArea, className: 'guest'},
-    {key: 'back', name: 'Depo / arka alan', area: area * profile.back, className: 'back'},
+    {key: 'front', name: model === 'retail' ? 'Window / entry' : 'Welcome area', area: area * profile.front, className: 'front'},
+    {key: 'service', name: model === 'restaurant' ? 'Kitchen / service' : model === 'retail' ? 'Checkout / fitting' : 'Counter / service', area: area * profile.service, className: 'service'},
+    {key: 'guest', name: model === 'retail' ? 'Sales area' : model === 'studio' ? 'Activity area' : 'Guest area', area: guestArea, className: 'guest'},
+    {key: 'back', name: 'Storage / back area', area: area * profile.back, className: 'back'},
   ];
   return {concept, conceptId, profile, area, frontage, depth, guestArea, peakGuests, dailyGuests, serviceTurns, efficiency, accessible, zones};
 }
@@ -204,8 +204,8 @@ function applyCapacityPenalty() {
   const penalty = floor.obstacles.length * 1.6 + floor.sinks.length * 1.4 + floor.walls.length * .7;
   const peak = Math.max(1, Math.round(plan.peakGuests - penalty / plan.profile.sqmPerGuest));
   const daily = Math.max(1, Math.round(plan.dailyGuests * peak / Math.max(plan.peakGuests, 1)));
-  document.querySelector('#peak-guests').textContent = `${peak} kişi`;
-  document.querySelector('#daily-guests').textContent = `${daily} kişi`;
+  document.querySelector('#peak-guests').textContent = `${peak} people`;
+  document.querySelector('#daily-guests').textContent = `${daily} people`;
   document.querySelector('#guest-area').textContent = `${Math.max(0, integer(plan.guestArea - penalty))} m²`;
   return {peak, daily, penalty};
 }
@@ -217,7 +217,7 @@ function updateSelectedControls() {
   document.querySelector('#item-width').value = item.w || 6;
   document.querySelector('#item-height').value = item.h || 6;
   document.querySelector('#item-rotation').value = item.rotate || 0;
-  const sync = () => { item.shape = document.querySelector('#item-shape').value; item.w = Number(document.querySelector('#item-width').value); item.h = Number(document.querySelector('#item-height').value); item.rotate = Number(document.querySelector('#item-rotation').value); renderLayoutEditor(); markVisionStale(); setEditorStatus('Seçilen ögenin şekli ve boyutu güncellendi.'); };
+  const sync = () => { item.shape = document.querySelector('#item-shape').value; item.w = Number(document.querySelector('#item-width').value); item.h = Number(document.querySelector('#item-height').value); item.rotate = Number(document.querySelector('#item-rotation').value); renderLayoutEditor(); markVisionStale(); setEditorStatus('The selected item shape and size were updated.'); };
   ['#item-shape', '#item-width', '#item-height', '#item-rotation'].forEach(selector => { const control = document.querySelector(selector); control.oninput = sync; control.onchange = sync; });
 }
 function renderLayoutEditor() {
@@ -225,10 +225,10 @@ function renderLayoutEditor() {
   const floor = activeFloor();
   const tabs = document.querySelector('#floor-tabs');
   tabs.innerHTML = layoutEditor.floors.map((item, index) => `<button type="button" data-floor="${index}" class="${index === layoutEditor.activeFloor ? 'is-active' : ''}">${text(item.name)}</button>`).join('');
-  tabs.querySelectorAll('button').forEach(button => button.onclick = () => { layoutEditor.activeFloor = Number(button.dataset.floor); layoutEditor.selected = null; renderLayoutEditor(); markVisionStale(); setEditorStatus(`${activeFloor().name} düzenleniyor.`); });
+  tabs.querySelectorAll('button').forEach(button => button.onclick = () => { layoutEditor.activeFloor = Number(button.dataset.floor); layoutEditor.selected = null; renderLayoutEditor(); markVisionStale(); setEditorStatus(`Editing ${activeFloor().name}.`); });
   document.querySelectorAll('[data-tool]').forEach(button => {
     button.classList.toggle('is-active', button.dataset.tool === layoutEditor.tool);
-    button.onclick = () => { layoutEditor.tool = button.dataset.tool; layoutEditor.selected = null; renderLayoutEditor(); setEditorStatus(layoutEditor.tool === 'select' ? 'Taşı: bir alanı, duvarı veya engeli sürükleyin.' : `${layoutEditor.tool === 'wall' ? 'Duvar' : 'Engel'} eklemek için planın boş alanına tıklayın.`); };
+    button.onclick = () => { layoutEditor.tool = button.dataset.tool; layoutEditor.selected = null; renderLayoutEditor(); setEditorStatus(layoutEditor.tool === 'select' ? 'Move: drag an area, wall, or obstacle.' : `Click an empty part of the plan to add a ${layoutEditor.tool}.`); };
   });
   const canvas = document.querySelector('#editor-canvas');
   canvas.innerHTML = [
@@ -249,7 +249,7 @@ function renderLayoutEditor() {
       const kind = layoutEditor.tool;
       const defaults = {wall: {w: 24, h: 3, shape: 'rectangle'}, obstacle: {w: 7, h: 9, shape: 'rounded'}, door: {w: 13, h: 4, shape: 'rounded'}, sink: {w: 6, h: 7, shape: 'circle'}}[kind];
       const item = {id: `${kind}-${Date.now()}`, x: clamp(point.x - defaults.w / 2, 0, 100 - defaults.w), y: clamp(point.y - defaults.h / 2, 0, 100 - defaults.h), rotate: 0, ...defaults};
-      item.kind = kind; floor[`${kind}s`].push(item); layoutEditor.selected = item; renderLayoutEditor(); markVisionStale(); setEditorStatus(`${kind === 'wall' ? 'Duvar' : kind === 'door' ? 'Kapı' : kind === 'sink' ? 'Lavabo' : 'Engel'} eklendi; Taşı aracına geçerek konumunu değiştirebilirsiniz.`); return;
+      item.kind = kind; floor[`${kind}s`].push(item); layoutEditor.selected = item; renderLayoutEditor(); markVisionStale(); setEditorStatus(`${kind === 'wall' ? 'Wall' : kind === 'door' ? 'Door' : kind === 'sink' ? 'Sink' : 'Obstacle'} added. Switch to Move to reposition it.`); return;
     }
     if (!itemElement) return;
     const kind = itemElement.dataset.kind, item = getItem(kind, itemElement.dataset.id);
@@ -267,10 +267,10 @@ function renderLayoutEditor() {
     drag.item.x = clamp(x - drag.dx, 0, maxX); drag.item.y = clamp(y - drag.dy, 0, maxY);
     drag.element.style.left = `${drag.item.x}%`; drag.element.style.top = `${drag.item.y}%`;
   };
-  canvas.onpointerup = event => { if (drag) { canvas.releasePointerCapture(event.pointerId); drag = null; markVisionStale(); setEditorStatus('Konum güncellendi. Başka bir kat seçebilir veya engel ekleyebilirsiniz.'); } };
+  canvas.onpointerup = event => { if (drag) { canvas.releasePointerCapture(event.pointerId); drag = null; markVisionStale(); setEditorStatus('Position updated. You can select another floor or add a constraint.'); } };
   document.querySelector('#delete-layout-item').onclick = () => {
-    const selected = layoutEditor.selected; if (!selected || selected.kind === 'zone') { setEditorStatus('Silmek için önce eklediğiniz bir duvar veya engeli seçin.'); return; }
-    floor[`${selected.kind}s`] = floor[`${selected.kind}s`].filter(item => item.id !== selected.id); layoutEditor.selected = null; renderLayoutEditor(); markVisionStale(); setEditorStatus('Seçilen öge silindi.');
+    const selected = layoutEditor.selected; if (!selected || selected.kind === 'zone') { setEditorStatus('Select a wall, door, sink, or obstacle to delete it.'); return; }
+    floor[`${selected.kind}s`] = floor[`${selected.kind}s`].filter(item => item.id !== selected.id); layoutEditor.selected = null; renderLayoutEditor(); markVisionStale(); setEditorStatus('Selected item deleted.');
   };
   document.querySelector('#add-floor').onclick = () => {
     const next = layoutEditor.floors.length + 1;
@@ -283,17 +283,17 @@ function renderLayoutEditor() {
       const overlap = zone.x < item.x + item.w && zone.x + zone.w > item.x && zone.y < item.y + item.h && zone.y + zone.h > item.y;
       if (overlap) zone.y = clamp(item.y + item.h + 3, 0, 100 - zone.h);
     }));
-    const capacity = applyCapacityPenalty(); renderLayoutEditor(); markVisionStale(); setEditorStatus(`Engeller dikkate alınarak yerleşim güncellendi. Aktif kat için tahmini kapasite ${capacity.peak} kişi.`);
+    const capacity = applyCapacityPenalty(); renderLayoutEditor(); markVisionStale(); setEditorStatus(`Layout updated for the selected constraints. Estimated active-floor capacity: ${capacity.peak} people.`);
   };
   document.querySelector('#approve-layout').onclick = () => {
     const capacity = applyCapacityPenalty(), vision = document.querySelector('#concept-vision');
     vision.hidden = false;
-    const materialSet = layoutEditor.plan.profile === modelProfiles.retail ? ['Modüler raf sistemi', 'Dayanıklı vinil zemin', 'Vitrin aydınlatması'] : layoutEditor.plan.profile === modelProfiles.studio ? ['Akustik yüzeyler', 'Hijyenik ıslak hacim', 'Esnek bölme sistemi'] : ['Sıcak ahşap', 'Mat mineral sıva', 'Katmanlı atmosfer aydınlatması'];
-    document.querySelector('#vision-title').textContent = `${layoutEditor.plan.concept} · iç mimari yönü`;
-    document.querySelector('#vision-summary').textContent = `${activeFloor().name} için plan onaylandı. ${activeFloor().doors.length} kapı, ${activeFloor().sinks.length} lavabo ve ${activeFloor().walls.length + activeFloor().obstacles.length} fiziksel engel dikkate alınarak tahmini ${capacity.peak} eş zamanlı kişi kapasitesiyle tasarım yönü oluşturuldu.`;
+    const materialSet = layoutEditor.plan.profile === modelProfiles.retail ? ['Modular shelving system', 'Durable vinyl flooring', 'Window-display lighting'] : layoutEditor.plan.profile === modelProfiles.studio ? ['Acoustic surfaces', 'Hygienic wet area', 'Flexible partition system'] : ['Warm wood', 'Matte mineral plaster', 'Layered ambient lighting'];
+    document.querySelector('#vision-title').textContent = `${layoutEditor.plan.concept} · interior design direction`;
+    document.querySelector('#vision-summary').textContent = `The plan for ${activeFloor().name} was approved. The design direction accounts for ${activeFloor().doors.length} doors, ${activeFloor().sinks.length} sinks, and ${activeFloor().walls.length + activeFloor().obstacles.length} physical constraints, with an estimated simultaneous capacity of ${capacity.peak} people.`;
     document.querySelector('#vision-materials').innerHTML = materialSet.map(item => `<span>${text(item)}</span>`).join('');
     vision.dataset.stale = 'true'; updateVisionPreview();
-    vision.scrollIntoView({behavior: 'smooth', block: 'start'}); setEditorStatus('Plan onaylandı; ücretsiz canlı önizleme güncellendi.');
+    vision.scrollIntoView({behavior: 'smooth', block: 'start'}); setEditorStatus('Plan approved; the free live preview was updated.');
     requestConceptRender();
   };
 }
@@ -306,32 +306,32 @@ function renderPlan(plan) {
   document.querySelector('.studio-empty').hidden = true;
   document.querySelector('#studio-result').hidden = false;
   document.querySelector('#layout-title').textContent = `${plan.concept} · ${plan.profile.label}`;
-  document.querySelector('#layout-badge').textContent = `${integer(plan.area)} m² · ${plan.frontage.toFixed(1)} m cephe`;
+  document.querySelector('#layout-badge').textContent = `${integer(plan.area)} m² · ${plan.frontage.toFixed(1)} m frontage`;
   document.querySelector('#layout-plan').innerHTML = `<div class="floor-shell" style="aspect-ratio:${Math.max(.7, Math.min(2.5, plan.frontage / plan.depth))}">${plan.zones.map(zone => `<div class="zone ${zone.className}" style="${zoneStyle(zone, plan)}"><span><b>${text(zone.name)}</b>${integer(zone.area)} m²</span></div>`).join('')}</div>`;
   initializeLayoutEditor(plan);
   document.querySelector('#studio-result').scrollIntoView({behavior: 'smooth', block: 'start'});
-  document.querySelector('#peak-guests').textContent = `${plan.peakGuests} kişi`;
-  document.querySelector('#daily-guests').textContent = `${plan.dailyGuests} kişi`;
-  const capacityCopy = plan.conceptId === 'accommodation' ? ['Günlük konaklayan', 'doluluk varsayımıyla']
-    : plan.conceptId === 'beauty' ? ['Günlük randevu kapasitesi', 'oda ve süre ile']
-      : plan.conceptId === 'repair' ? ['Günlük iş emri', 'istasyon kapasitesiyle']
-        : plan.conceptId === 'consulting' ? ['Günlük müşteri / ziyaret', 'ofis kullanımıyla']
-          : plan.profile === modelProfiles.retail ? ['Günlük ziyaret potansiyeli', 'alan akışı tahmini']
-            : ['Günlük ağırlama', 'servis turu ile'];
+  document.querySelector('#peak-guests').textContent = `${plan.peakGuests} people`;
+  document.querySelector('#daily-guests').textContent = `${plan.dailyGuests} people`;
+  const capacityCopy = plan.conceptId === 'accommodation' ? ['Daily guests staying', 'with occupancy assumption']
+    : plan.conceptId === 'beauty' ? ['Daily appointment capacity', 'with rooms and duration']
+      : plan.conceptId === 'repair' ? ['Daily work orders', 'with station capacity']
+        : plan.conceptId === 'consulting' ? ['Daily clients / visitors', 'with office use']
+          : plan.profile === modelProfiles.retail ? ['Daily visit potential', 'with space-flow estimate']
+            : ['Daily hosting', 'with service turns'];
   document.querySelector('#daily-capacity-label').textContent = capacityCopy[0];
   document.querySelector('#daily-capacity-note').textContent = capacityCopy[1];
   document.querySelector('#guest-area').textContent = `${integer(plan.guestArea)} m²`;
   document.querySelector('#layout-efficiency').textContent = `%${plan.efficiency}`;
-  const circulationNote = plan.accessible ? 'Erişilebilir dolaşım için ek alan ayrıldı.' : 'Dolaşım alanı yalnızca operasyon akışına göre ayrıldı.';
-  document.querySelector('#layout-summary').textContent = `${integer(plan.area)} m² mekânda yaklaşık ${integer(plan.depth)} m derinlik varsayıldı. Konuk/satış alanı ${integer(plan.guestArea)} m²; ${plan.peakGuests} eş zamanlı kişi ve günde yaklaşık ${plan.dailyGuests} kişilik operasyon senaryosu üretir. ${circulationNote}`;
+  const circulationNote = plan.accessible ? 'Extra space was reserved for accessible circulation.' : 'Circulation space was allocated for operating flow only.';
+  document.querySelector('#layout-summary').textContent = `The ${integer(plan.area)} m² space assumes an approximate depth of ${integer(plan.depth)} m. Guest/sales area is ${integer(plan.guestArea)} m², producing an operating scenario of ${plan.peakGuests} simultaneous people and about ${plan.dailyGuests} people per day. ${circulationNote}`;
   const volumeAction = plan.profile === modelProfiles.retail
-    ? `Günlük ${plan.dailyGuests} ziyaret potansiyelini kasa geçişi ve gerçek mağaza trafiğiyle haftalık doğrulayın.`
+    ? `Validate the daily potential of ${plan.dailyGuests} visits weekly using checkout activity and real store traffic.`
     : plan.profile === modelProfiles.studio
-      ? `Günlük ${plan.dailyGuests} kişilik kullanım/randevu hedefini takvim doluluğu ve ekip kapasitesiyle haftalık doğrulayın.`
-      : `Günlük ${plan.dailyGuests} kişilik senaryoyu, seçilen ${plan.serviceTurns.toLocaleString('tr-TR')} servis turu ile takip edin; gerçek yaya trafiği ve satış verisiyle haftalık güncelleyin.`;
+      ? `Validate the daily use/appointment target of ${plan.dailyGuests} people weekly with calendar occupancy and team capacity.`
+      : `Track the daily scenario of ${plan.dailyGuests} people with the selected ${plan.serviceTurns.toLocaleString('en-GB')} service turns; update it weekly with actual footfall and sales data.`;
   const actions = [
-    `Cephede karşılama ve servis akışını ayırın; ${plan.frontage.toFixed(1)} m cephe için girişte kuyruk oluşumunu sahada test edin.`,
-    plan.efficiency < 35 ? 'Arka alan oranı yüksek. Depo ve hazırlık alanlarını modüler ekipmanla gözden geçirerek konuk alanını artırmayı değerlendirin.' : 'Konuk/satış alanı dengeli görünüyor. Masaları veya sergileri ana dolaşım hattını kesmeyecek şekilde yerleştirin.',
+    `Separate welcome and service flow at the frontage; test entry queues on site for the ${plan.frontage.toFixed(1)} m frontage.`,
+    plan.efficiency < 35 ? 'The back-area ratio is high. Consider modular equipment in storage and preparation areas to increase guest space.' : 'Guest/sales area looks balanced. Place tables or displays without interrupting the main circulation route.',
     volumeAction,
   ];
   document.querySelector('#layout-actions').innerHTML = actions.map(action => `<li>${text(action)}</li>`).join('');

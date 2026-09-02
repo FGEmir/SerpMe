@@ -50,13 +50,13 @@ load_local_env()
 def demo_results(business, location):
     """Keep the product demonstrable before a team adds its SerpAPI key."""
     prefix = location.split(",")[0].strip()
-    names = [f"Mola {business.title()}", f"{prefix} {business.title()}", f"Atölye {business.title()}", f"Rota {business.title()}", f"Mahalle {business.title()}", f"Gün Işığı {business.title()}"]
+    names = [f"Break {business.title()}", f"{prefix} {business.title()}", f"Workshop {business.title()}", f"Route {business.title()}", f"Neighbourhood {business.title()}", f"Daylight {business.title()}"]
     seed = sum(ord(letter) for letter in business.lower()) % 5
     ratings = [4.5, 4.1, 4.3, 3.9, 4.6, 4.0]
     reviews = [482, 129, 267, 76, 351, 94]
     ratings = [round(max(3.5, rating - seed * .08), 1) for rating in ratings]
     reviews = [max(35, count - seed * 47) for count in reviews]
-    return {"demo": True, "local_results": [{"title": name, "rating": ratings[i], "reviews": reviews[i], "address": f"{location} çevresi", "open_state": "Açık" if i != 3 else "Kapalı"} for i, name in enumerate(names)]}
+    return {"demo": True, "local_results": [{"title": name, "rating": ratings[i], "reviews": reviews[i], "address": f"Around {location}", "open_state": "Open" if i != 3 else "Closed"} for i, name in enumerate(names)]}
 
 
 def demo_payload(business, location, radius, concepts, provider_status=None):
@@ -186,7 +186,7 @@ def build_market_analysis(direct_by_radius, proxy_results, live):
         "proxy_counts": {key: len(value) for key, value in proxy_results.items()},
         "evaluation_method": method,
         "reasons": reasons,
-        "limitations": ["Google Maps sonuçları görünür listeyle sınırlıdır; nüfus, kira ve gerçek yaya trafiği ölçülmez.", "Yarıçap, Google Maps görünüm yakınlaştırmasıyla yaklaşık uygulanır."],
+        "limitations": ["Google Maps results are limited to the visible result set; population, rent, and actual pedestrian traffic are not measured.", "The radius is applied approximately through the Google Maps viewport."],
     }
 
 
@@ -195,18 +195,18 @@ class AppHandler(SimpleHTTPRequestHandler):
         from urllib.parse import urlparse
         path = urlparse(self.path).path
         if path == "/healthz":
-            return self.send_json({"status": "ok", "service": "pazar-pusulasi"})
+            return self.send_json({"status": "ok", "service": "serpme"})
         if path == "/api/search":
             return self.search()
         if path not in PUBLIC_FILES:
-            return self.send_json({"error": "Kaynak bulunamadı."}, 404)
+            return self.send_json({"error": "Resource not found."}, 404)
         self.path = "/index.html" if path == "/" else path
         return super().do_GET()
 
     def do_POST(self):
         # The public web service has no application POST endpoints; portfolio
         # writes go directly to Supabase under row-level security policies.
-        return self.send_json({"error": "Kaynak bulunamadı."}, 404)
+        return self.send_json({"error": "Resource not found."}, 404)
 
     def search(self):
         from urllib.parse import parse_qs, urlparse
@@ -220,20 +220,20 @@ class AppHandler(SimpleHTTPRequestHandler):
         concepts = [item.strip() for item in query.get("concepts", [""])[0].split(",") if item.strip()][:3]
         api_key = os.environ.get("SERPAPI_KEY")
         if not business or not location or len(business) > 120 or len(location) > 200:
-            return self.send_json({"error": "İşletme tipi ve konum zorunludur."}, 400)
+            return self.send_json({"error": "Business type and location are required."}, 400)
         cache_key = (business.lower(), location.lower(), radius, tuple(concepts))
         cached = self.cached_response(cache_key)
         if cached:
             return self.send_json(cached)
         if not self.rate_limit_ok():
-            return self.send_json({"error": "Çok fazla analiz isteği gönderildi. Lütfen bir dakika sonra tekrar deneyin."}, 429)
+            return self.send_json({"error": "Too many analysis requests. Please try again in one minute."}, 429)
         if not api_key:
             payload = demo_payload(business, location, radius, concepts)
             self.cache_response(cache_key, payload)
             return self.send_json(payload)
         provider_calls = len(RADIUS_LADDER) + len(PROXY_GROUPS) + sum(1 for concept in concepts if concept.lower() != business.lower())
         if not self.provider_budget_ok(provider_calls):
-            return self.send_json({"error": "Güncel analiz kotası doldu. Lütfen daha sonra tekrar deneyin."}, 429)
+            return self.send_json({"error": "The live analysis quota has been reached. Please try again later."}, 429)
         try:
             direct_by_radius = {}
             accumulated = []
@@ -254,7 +254,7 @@ class AppHandler(SimpleHTTPRequestHandler):
         except Exception:
             # The user can still explore the product while the upstream provider
             # is unavailable; the frontend makes this fallback unmistakable.
-            payload = demo_payload(business, location, radius, concepts, "SerpAPI geçici olarak erişilemedi")
+            payload = demo_payload(business, location, radius, concepts, "SerpAPI is temporarily unavailable.")
             self.cache_response(cache_key, payload)
             self.send_json(payload)
 
